@@ -102,11 +102,16 @@ def registerAuth(type_user):
         staff = airline_staff_parse.parse_args()
         inDB = dbmanager.registerStaff(staff)
         
-    if not inDB:
-        return render_template('register.html', error="email or username exists already")
-    else: 
-        session['username'] = inDB # customers use email not username
+    if not inDB: 
+        if type_user == "customer":
+            template = "customerRegister.html"
+        elif type_user == "airline_staff":
+            template = "staffRegister.html"
+        return render_template(template, error="email or username exists already")
+    else:
+        session['username'] = inDB
         return redirect(url_for('home'))
+    
      
 @app.route('/home')
 def home():
