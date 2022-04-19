@@ -2,9 +2,15 @@
 <head>
 </head>
 <body>
+
+<p>Login here!</p>
 <form action="/loginAuth" method="POST">
-	<input type="text" name = "username" placeholder="username" required/> </br>
+	<input type="text" name = "username" placeholder="username or email" required/> </br>
 	<input type="password" name = "password" placeholder="password" required/></br>
+	<select name="type">
+		<option value ="customer">Customer</option>
+		<option value ="airline_staff">Staff</option>
+	</select>
 	<input type="submit" value = Login />
 	{% if error %}
 		<p class="error"><strong>Error:</strong> {{error}}</p>

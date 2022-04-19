@@ -23,8 +23,6 @@ def checkUserExistsInDb(typeUser, field, username):
     cursor = conn.cursor()
 	#executes query
     query = "SELECT * FROM %s WHERE %s = '%s'" % (typeUser, field, username)
-    print(typeUser, field, username)
-    print(query)
     cursor.execute(query)
 	#stores the results in a variable
     data = cursor.fetchone()
@@ -37,8 +35,12 @@ def checkUserLogin(typeUser, username, password):
     # incoming pass must be hashed to check
     # stored pass can't be decrypted (md5 is one way hash)
     password = hashlib.md5(password.encode()).hexdigest() 
-    query = "SELECT * FROM %s WHERE username = %s AND password = %s"
-    cursor.execute(query, (typeUser, username, password))
+    if typeUser == "customer":
+        # customers don't use username
+        query = "SELECT * FROM %s WHERE email = '%s' AND password = '%s'" % (typeUser, username, password)
+    elif typeUser == "airline_staff":
+        query = "SELECT * FROM %s WHERE username = '%s' AND password = '%s'" % (typeUser, username, password)
+    cursor.execute(query)
     data = cursor.fetchone()
     cursor.close()
     return data
@@ -47,22 +49,19 @@ def registerCustomer(customer):
     """
     dict[email, name, ...]
     """
-    print("REGISTERCUSTOMER")
     exists = checkUserExistsInDb("customer", "email", customer["email"])
     if (exists): 
         return False 
     else:
         password = customer["password"]
         customer["password"] = hashlib.md5(password.encode()).hexdigest()
-        # values = ""
-        # print(customer)
-        # for field in CUSTOMER: 
-        #     values += "'" + str(customer[field]) + "', "
+        
+        # todo - I'm pretty sure there's a better way of writing this
+        # Tried it another way with string concatenation but it felt dumb
         insertCustomer = f"INSERT INTO customer VALUES ('%(email)s', '%(name)s', '%(password)s', '%(building_number)s', '%(street)s', '%(city)s', '%(state)s', '%(phone_number)s', '%(passport_number)s', '%(passport_expiration)s', '%(passport_country)s', '%(date_of_birth)s' )" % customer
-        print(insertCustomer)
         cursor = conn.cursor()
         cursor.execute(insertCustomer)
-        conn.commit()
+        conn.commit() 
         cursor.close()
         return customer["email"]
 

@@ -29,6 +29,7 @@ airline_staff_parse.add_argument("first_name", type=str, location='form')
 airline_staff_parse.add_argument("last_name", type=str, location='form')
 airline_staff_parse.add_argument("date_of_birth", type=str, location='form')
 airline_staff_parse.add_argument("airline", type=str, location='form')
+airline_staff_parse.add_argument("airline", type=str, location='form')
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -67,12 +68,17 @@ def register():
 def customerRegister(): 
     return render_template('customerRegister.html')
 
+@app.route('/staffRegister')
+def staffRegister(): 
+    return render_template('staffRegister.html')
+
 #Authenticates the login
-@app.route('/loginAuth/<type_user>', methods=['GET', 'POST'])
-def loginAuth(type_user):
+@app.route('/loginAuth', methods=['GET', 'POST'])
+def loginAuth():
 	#grabs information from the forms
 	username = request.form['username']
 	password = request.form['password']
+	type_user = request.form['type']
 
 	exists = dbmanager.checkUserLogin(type_user, username, password)
 	error = None
@@ -89,18 +95,18 @@ def loginAuth(type_user):
 #Authenticates the register
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
 def registerAuth(type_user):
-	if type_user == "customer":
-		customer = customer_parser.parse_args()
-		inDB = dbmanager.registerCustomer(customer)
-	elif type_user == "airline_staff":
-		staff = airline_staff_parse.parse_args()
-		inDB = dbmanager.registerStaff(staff)
-
-	if not inDB:
-		return render_template('register.html', error="email or username exists already")
-	else: 
-		session['username'] = inDB # customers use email not username
-		return redirect(url_for('home'))
+    if type_user == "customer":
+        customer = customer_parser.parse_args()
+        inDB = dbmanager.registerCustomer(customer)
+    elif type_user == "airline_staff":
+        staff = airline_staff_parse.parse_args()
+        inDB = dbmanager.registerStaff(staff)
+        
+    if not inDB:
+        return render_template('register.html', error="email or username exists already")
+    else: 
+        session['username'] = inDB # customers use email not username
+        return redirect(url_for('home'))
      
 @app.route('/home')
 def home():
