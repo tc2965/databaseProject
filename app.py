@@ -14,6 +14,8 @@ customer_parser.add_argument("name", type=str, location='form')
 customer_parser.add_argument("password", type=str, location='form')
 customer_parser.add_argument("building_number", type=str, location='form')
 customer_parser.add_argument("street", type=str, location='form')
+customer_parser.add_argument("city", type=str, location='form')
+customer_parser.add_argument("state", type=str, location='form')
 customer_parser.add_argument("phone_number", type=str, location='form')
 customer_parser.add_argument("passport_number", type=str, location='form')
 customer_parser.add_argument("passport_expiration", type=str, location='form')
@@ -103,14 +105,7 @@ def registerAuth(type_user):
 @app.route('/home')
 def home():
     username = session['username']
-    cursor = conn.cursor();
-    query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'
-    cursor.execute(query, (username))
-    data1 = cursor.fetchall() 
-    for each in data1:
-        print(each['blog_post'])
-    cursor.close()
-    return render_template('home.html', username=username, posts=data1)
+    return render_template('home.html', username=username)
 
 		
 @app.route('/post', methods=['GET', 'POST'])

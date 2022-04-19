@@ -22,8 +22,10 @@ conn = pymysql.connect(host=host,
 def checkUserExistsInDb(typeUser, field, username):
     cursor = conn.cursor()
 	#executes query
-    query = "SELECT * FROM %s WHERE %s = %s"
-    cursor.execute(query, (typeUser, field, username))
+    query = "SELECT * FROM %s WHERE %s = '%s'" % (typeUser, field, username)
+    print(typeUser, field, username)
+    print(query)
+    cursor.execute(query)
 	#stores the results in a variable
     data = cursor.fetchone()
     cursor.close()
@@ -45,16 +47,19 @@ def registerCustomer(customer):
     """
     dict[email, name, ...]
     """
+    print("REGISTERCUSTOMER")
     exists = checkUserExistsInDb("customer", "email", customer["email"])
     if (exists): 
         return False 
     else:
         password = customer["password"]
         customer["password"] = hashlib.md5(password.encode()).hexdigest()
-        values = ""
-        for field in CUSTOMER: 
-            values += customer[field] + ", "
-        insertCustomer = f"INSERT INTO customer VALUES ({values})"
+        # values = ""
+        # print(customer)
+        # for field in CUSTOMER: 
+        #     values += "'" + str(customer[field]) + "', "
+        insertCustomer = f"INSERT INTO customer VALUES ('%(email)s', '%(name)s', '%(password)s', '%(building_number)s', '%(street)s', '%(city)s', '%(state)s', '%(phone_number)s', '%(passport_number)s', '%(passport_expiration)s', '%(passport_country)s', '%(date_of_birth)s' )" % customer
+        print(insertCustomer)
         cursor = conn.cursor()
         cursor.execute(insertCustomer)
         conn.commit()
@@ -71,10 +76,7 @@ def registerStaff(staff):
     else: 
         password = staff["password"]
         staff["password"] = hashlib.md5(password.encode()).hexdigest()
-        values = ""
-        for field in STAFF: 
-            values += staff[field] + ", "
-        insertStaff = f"INSERT INTO airline_staff VALUES ({values})"
+        insertStaff = f"INSERT INTO airline_staff VALUES ('%(username)s', '%(password)s', '%(first_name)s', '%(last_name)s', '%(date_of_birth)s', '%(airline)s')" % staff
         cursor = conn.cursor()
         cursor.execute(insertStaff)
         conn.commit()
