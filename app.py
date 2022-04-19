@@ -1,9 +1,32 @@
 #Import Flask Library
 from email import charset
 from flask import Flask, render_template, request, session, url_for, redirect
+from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
+import dbmanager
+
+
+customer_parser = reqparse.RequestParser() 
+customer_parser.add_argument("email", type=str, location='form')
+customer_parser.add_argument("name", type=str, location='form')
+customer_parser.add_argument("password", type=str, location='form')
+customer_parser.add_argument("building_number", type=str, location='form')
+customer_parser.add_argument("street", type=str, location='form')
+customer_parser.add_argument("phone_number", type=str, location='form')
+customer_parser.add_argument("passport_number", type=str, location='form')
+customer_parser.add_argument("passport_expiration", type=str, location='form')
+customer_parser.add_argument("passport_country", type=str, location='form')
+customer_parser.add_argument("date_of_birth", type=str, location='form')
+
+airline_staff_parse = reqparse.RequestParser() 
+airline_staff_parse.add_argument("username", type=str, location='form')
+airline_staff_parse.add_argument("password", type=str, location='form')
+airline_staff_parse.add_argument("first_name", type=str, location='form')
+airline_staff_parse.add_argument("last_name", type=str, location='form')
+airline_staff_parse.add_argument("date_of_birth", type=str, location='form')
+airline_staff_parse.add_argument("airline", type=str, location='form')
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -38,24 +61,20 @@ def login():
 def register():
 	return render_template('register.html')
 
+@app.route('/customerRegister')
+def customerRegister(): 
+    return render_template('customerRegister.html')
+
 #Authenticates the login
-@app.route('/loginAuth', methods=['GET', 'POST'])
-def loginAuth():
+@app.route('/loginAuth/<type_user>', methods=['GET', 'POST'])
+def loginAuth(type_user):
 	#grabs information from the forms
 	username = request.form['username']
 	password = request.form['password']
 
-	#cursor used to send queries
-	cursor = conn.cursor()
-	#executes query
-	query = 'SELECT * FROM user WHERE username = %s and password = %s'
-	cursor.execute(query, (username, password))
-	#stores the results in a variable
-	data = cursor.fetchone()
-	#use fetchall() if you are expecting more than 1 data row
-	cursor.close()
+	exists = dbmanager.checkUserLogin(type_user, username, password)
 	error = None
-	if(data):
+	if(exists):
 		#creates a session for the the user
 		#session is a built in
 		session['username'] = username
@@ -66,35 +85,23 @@ def loginAuth():
 		return render_template('login.html', error=error)
 
 #Authenticates the register
-@app.route('/registerAuth', methods=['GET', 'POST'])
-def registerAuth():
-	#grabs information from the forms
-	username = request.form['username']
-	password = request.form['password']
+@app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
+def registerAuth(type_user):
+	if type_user == "customer":
+		customer = customer_parser.parse_args()
+		inDB = dbmanager.registerCustomer(customer)
+	elif type_user == "airline_staff":
+		staff = airline_staff_parse.parse_args()
+		inDB = dbmanager.registerStaff(staff)
 
-	#cursor used to send queries
-	cursor = conn.cursor()
-	#executes query
-	query = 'SELECT * FROM user WHERE username = %s'
-	cursor.execute(query, (username))
-	#stores the results in a variable
-	data = cursor.fetchone()
-	#use fetchall() if you are expecting more than 1 data row
-	error = None
-	if(data):
-		#If the previous query returns data, then user exists
-		error = "This user already exists"
-		return render_template('register.html', error = error)
-	else:
-		ins = 'INSERT INTO user VALUES(%s, %s)'
-		cursor.execute(ins, (username, password))
-		conn.commit()
-		cursor.close()
-		return render_template('index.html')
-
+	if not inDB:
+		return render_template('register.html', error="email or username exists already")
+	else: 
+		session['username'] = inDB # customers use email not username
+		return redirect(url_for('home'))
+     
 @app.route('/home')
 def home():
-    
     username = session['username']
     cursor = conn.cursor();
     query = 'SELECT ts, blog_post FROM blog WHERE username = %s ORDER BY ts DESC'

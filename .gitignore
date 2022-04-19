@@ -1,3 +1,9 @@
 # don't commit env files
 .env
 .venv
+/env
+
+# cache 
+__pycache__/
+*.py[cod]
+*$py.class
