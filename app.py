@@ -29,7 +29,7 @@ airline_staff_parse.add_argument("first_name", type=str, location='form')
 airline_staff_parse.add_argument("last_name", type=str, location='form')
 airline_staff_parse.add_argument("date_of_birth", type=str, location='form')
 airline_staff_parse.add_argument("airline", type=str, location='form')
-airline_staff_parse.add_argument("airline", type=str, location='form')
+airline_staff_parse.add_argument("phone_number", type=str, location='form')
 
 #Initialize the app from Flask
 app = Flask(__name__)

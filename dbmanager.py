@@ -79,5 +79,9 @@ def registerStaff(staff):
         cursor = conn.cursor()
         cursor.execute(insertStaff)
         conn.commit()
+        # now insert phone
+        insertStaffPhone = f"INSERT INTO airline_staff_phones VALUES ('%(username)s', '%(phone_number)s')" % staff
+        cursor.execute(insertStaffPhone)
+        conn.commit() 
         cursor.close()
         return staff["username"]
