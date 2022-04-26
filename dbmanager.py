@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from models import CUSTOMER, STAFF
 import hashlib
+from datetime import datetime, timedelta
 
 load_dotenv()
 host = os.environ.get("HOST")
@@ -94,3 +95,59 @@ def registerStaff(staff):
         conn.commit() 
         cursor.close()
         return staff["username"]
+
+def searchFlights(source, destination, departure_date):
+    conn = createConnection()
+    cursor = conn.cursor()
+    # this query is wrong 
+    query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND arrival_airport_code = '%s' AND departure_date_time > '%s'" % (source, destination, departure_date)
+    cursor = conn.cursor() 
+    cursor.execute(query)
+    matchingFlights = cursor.fetchall()
+    cursor.close()
+    return convertToDict("flight_number", matchingFlights)
+
+def convertToDict(field, lists): 
+    print(lists)
+    dict = {}
+    for elem in lists: 
+        dict[elem[field]] = elem 
+    print(dict)
+    return dict
+
+
+# AIRLINE STAFF USE CASE
+
+# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
+def findFutureAirlineFlights(username): 
+    conn = createConnection() 
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    fromToday30 = datetime.today().strftime("%Y-%m-%d") + timedelta(days=30)
+    query = f"SELECT * FROM flight WHERE departure_date_time < '%s' AND airline_name = '%s'" % fromToday30, airline
+    cursor.execute(query)
+    flights = cursor.fetchall() 
+    cursor.close() 
+    return flights
+
+# 2. CREATE NEW FLIGHTS 
+def createFlight(flight): 
+    conn = createConnection() 
+    cursor = conn.cursor()
+    query = f"INSERT INTO flight VALUES ('%(flight_number)s', '%(airplane_id)s', '%(departure_date_time)s', '%(departure_airport_code)s', '%(arrival_date_time)s', '%(arrival_airport_code)s', '%(base_price)s', '%(status)s', '%(airline_name)s')" % flight
+    cursor.execute(query)
+    conn.commit() 
+    cursor.close() 
+    return flight["flight_number"]
+
+def changeFlightStatus(status, flight_number, departure_date_time, username): 
+    conn = createConnection()
+    cursor = conn.cursor() 
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    updateFlightStatus = f"UPDATE flight SET status = '%s' WHERE flight_number = '%s' AND departure_date_time = '%s' AND airline_name = '%s'" % (status, flight_number, departure_date_time, airline)
+    cursor.execute(updateFlightStatus)
+    conn.commit() 
+    cursor.close()
+    return flight_number

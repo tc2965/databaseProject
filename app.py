@@ -5,7 +5,7 @@ from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from objectParsers import customer_parser, airline_staff_parser
+from objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser
 import dbmanager
 
 #Initialize the app from Flask
@@ -50,6 +50,28 @@ def staffRegister():
     return render_template('staffRegister.html')
 
 # APPLICATION USE CASES
+# 1. VIEW PUBLIC INFO
+@app.route('/airports', methods=['GET', 'POST'])
+def airports(): 
+	if request.method == 'GET': 
+		# returns dict = {city1: airport_obj1, city2: airport_obj2 }
+		return dbmanager.getAllAirports()
+	elif request.method == 'POST': 
+		airport = airport_parser.parse_args()
+		return dbmanager.createAirport(airport)
+	else: 
+		# todo raise 405 method not allowed
+		return None
+
+@app.route('/flight/search/', methods=['POST'])
+def searchFlights(): 
+    # if it's round trip, just use this endpoint again
+    source = request.form["source"] # airport code
+    destination = request.form["destination"]
+    departure = request.form["departure_date"]
+    
+    # return render_template('home.html', username=session["username"], flights=dbmanager.searchFlights(source, destination, departure))
+    return dbmanager.searchFlights(source, destination, departure)
 
 # 2. REGISTER
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
@@ -91,7 +113,31 @@ def loginAuth():
 		error = 'Invalid login or username'
 		return render_template('login.html', error=error)
 
-    
+# AIRLINE STAFF USE CASES
+# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS 
+# 2. CREATE FLIGHTS
+@app.route('/flights', methods=['GET', 'POST'])
+def flights():
+    if not session["username"]:
+        return None # should actually render template with login error 
+    if request.method == 'GET': 
+        return dbmanager.findFutureAirlineFlights(session["username"])
+    elif request.method == 'POST':
+        flight = flight_parser.parse_args()
+        return dbmanager.createFlight(flight)
+
+# 3. CHANGE FLIGHT STATUS
+@app.route('/flight_status', methods=['POST'])
+def flightStatus():
+    if not session["username"]:
+        return None 
+    if request.method == 'POST':
+        status = request.form['status']
+        flight_number = request.form['flight_number']
+        departure_date_time = request.form['departure_date_time']
+        
+        return dbmanager.changeFlightStatus(status, flight_number, departure_date_time, session["username"])
+        
      
 @app.route('/home')
 def home():

@@ -20,6 +20,21 @@
 
 </table>
 
+<form action="/flight/search/" method="POST">
+	<input type="text" name = "source" placeholder="source" required/>
+	<input type="text" name = "destination" placeholder="destination" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="submit" value = Submit />
+</form>
+{%if flights%}
+	<p> {{flights.items}} </p>
+	{% for dictionary in flights %}
+	{% for key, value in dictionary.items %}
+	  <p>{{ key }} : {{ value }}</p>
+	{% endfor %}
+  {% endfor %}
+{%endif%}
+
 <a href="/logout">Logout</a>
 
 </body>
