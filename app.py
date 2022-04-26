@@ -5,31 +5,8 @@ from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
+from objectParsers import customer_parser, airline_staff_parser
 import dbmanager
-
-
-customer_parser = reqparse.RequestParser() 
-customer_parser.add_argument("email", type=str, location='form')
-customer_parser.add_argument("name", type=str, location='form')
-customer_parser.add_argument("password", type=str, location='form')
-customer_parser.add_argument("building_number", type=str, location='form')
-customer_parser.add_argument("street", type=str, location='form')
-customer_parser.add_argument("city", type=str, location='form')
-customer_parser.add_argument("state", type=str, location='form')
-customer_parser.add_argument("phone_number", type=str, location='form')
-customer_parser.add_argument("passport_number", type=str, location='form')
-customer_parser.add_argument("passport_expiration", type=str, location='form')
-customer_parser.add_argument("passport_country", type=str, location='form')
-customer_parser.add_argument("date_of_birth", type=str, location='form')
-
-airline_staff_parse = reqparse.RequestParser() 
-airline_staff_parse.add_argument("username", type=str, location='form')
-airline_staff_parse.add_argument("password", type=str, location='form')
-airline_staff_parse.add_argument("first_name", type=str, location='form')
-airline_staff_parse.add_argument("last_name", type=str, location='form')
-airline_staff_parse.add_argument("date_of_birth", type=str, location='form')
-airline_staff_parse.add_argument("airline", type=str, location='form')
-airline_staff_parse.add_argument("phone_number", type=str, location='form')
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -72,7 +49,29 @@ def customerRegister():
 def staffRegister(): 
     return render_template('staffRegister.html')
 
-#Authenticates the login
+# APPLICATION USE CASES
+
+# 2. REGISTER
+@app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
+def registerAuth(type_user):
+    if type_user == "customer":
+        customer = customer_parser.parse_args()
+        inDB = dbmanager.registerCustomer(customer)
+    elif type_user == "airline_staff":
+        staff = airline_staff_parser.parse_args()
+        inDB = dbmanager.registerStaff(staff)
+        
+    if not inDB: 
+        if type_user == "customer":
+            template = "customerRegister.html"
+        elif type_user == "airline_staff":
+            template = "staffRegister.html"
+        return render_template(template, error="email or username exists already")
+    else:
+        session['username'] = inDB
+        return redirect(url_for('home'))
+
+# 3. LOGIN
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
 	#grabs information from the forms
@@ -92,25 +91,6 @@ def loginAuth():
 		error = 'Invalid login or username'
 		return render_template('login.html', error=error)
 
-#Authenticates the register
-@app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
-def registerAuth(type_user):
-    if type_user == "customer":
-        customer = customer_parser.parse_args()
-        inDB = dbmanager.registerCustomer(customer)
-    elif type_user == "airline_staff":
-        staff = airline_staff_parse.parse_args()
-        inDB = dbmanager.registerStaff(staff)
-        
-    if not inDB: 
-        if type_user == "customer":
-            template = "customerRegister.html"
-        elif type_user == "airline_staff":
-            template = "staffRegister.html"
-        return render_template(template, error="email or username exists already")
-    else:
-        session['username'] = inDB
-        return redirect(url_for('home'))
     
      
 @app.route('/home')
