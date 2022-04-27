@@ -127,15 +127,28 @@ def loginAuth():
 		return render_template('login.html', error=error)
 
 # AIRLINE STAFF USE CASES
-# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS 
+# 1. VIEW FUTURE FLIGHTS BY 30 DAYS/RANGE OF DATES
+@app.route('/view_flights/time/<start>/<end>', methods=['GET'])
+def view_flights_time(start, end):
+    if not session.get("username"):
+        return createFlight("Login first")
+    if request.method == 'GET': 
+        return dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])
+
+# 1. VIEW FUTURE FLIGHTS BY AIRPORTS
+@app.route('/view_flights/<type>/<airport>', methods=['GET'])
+def view_flights_time(type, airport):
+    if not session.get("username"):
+        return createFlight("Login first")
+    if request.method == 'GET': 
+        return dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])
+    
 # 2. CREATE FLIGHTS
 @app.route('/flights', methods=['GET', 'POST'])
 def flights():
     if not session.get("username"):
         return createFlight("Login first") # should actually render template with login error 
-    if request.method == 'GET': 
-        return dbmanager.findFutureAirlineFlights(session["username"])
-    elif request.method == 'POST':
+    if request.method == 'POST':
         flight = flight_parser.parse_args()
         return dbmanager.createFlight(flight)
 

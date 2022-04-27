@@ -119,14 +119,29 @@ def convertToDict(field, lists):
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
-def findFutureAirlineFlights(username): 
+def findFutureAirlineFlightsTime(start, end, username): 
     conn = createConnection() 
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    fromToday30 = datetime.today() + relativedelta(days=30)
-    fromToday30 = fromToday30.strftime("%Y-%m-%d")
-    query = f"SELECT * FROM flight WHERE departure_date_time < '%s' AND airline_name = '%s'" % fromToday30, airline
+    start = start.strftime("%Y-%m-%d")
+    end = start.strftime("%Y-%m-%d")
+    query = f"SELECT * FROM flight WHERE (departure_date_time BETWEEN '%s' AND '%s') AND airline_name = '%s'" % (start, end, airline)
+    cursor.execute(query)
+    flights = cursor.fetchall() 
+    cursor.close() 
+    return flights
+
+# 1. VIEW FUTURE FLIGHTS BY AIRPORTS
+def findFutureAirlineFlightsAirport(way_type, airport, username): 
+    conn = createConnection() 
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    if way_type == "source":
+        query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND airline = '%s'" % (airport, airline)
+    elif way_type == "destination": 
+        query = f"SELECT * FROM flight WHERE arrival_airport_code = '%s' AND airline = '%s'" % (airport, airline)
     cursor.execute(query)
     flights = cursor.fetchall() 
     cursor.close() 
