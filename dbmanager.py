@@ -44,9 +44,9 @@ def checkUserLogin(typeUser, username, password):
     password = hashlib.md5(password.encode()).hexdigest() 
     if typeUser == "customer":
         # customers don't use username
-        query = "SELECT * FROM %s WHERE email = '%s' AND password = '%s'" % (typeUser, username, password)
+        query = "SELECT * FROM %s WHERE email = '%s' AND customer_password = '%s'" % (typeUser, username, password)
     elif typeUser == "airline_staff":
-        query = "SELECT * FROM %s WHERE username = '%s' AND password = '%s'" % (typeUser, username, password)
+        query = "SELECT * FROM %s WHERE username = '%s' AND user_password = '%s'" % (typeUser, username, password)
     cursor.execute(query)
     data = cursor.fetchone()
     cursor.close()

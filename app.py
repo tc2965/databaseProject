@@ -50,8 +50,16 @@ def staffRegister():
     return render_template('staffRegister.html')
 
 @app.route('/createFlight')
-def createFlight(error): 
+def createFlight(error=None): 
     return render_template('createFlight.html', error=error)
+
+@app.route('/createAirplane')
+def createAirplane(error=None): 
+    return render_template('createAirplane.html', error=error)
+
+@app.route('/createAirport')
+def createAirport(error=None): 
+    return render_template('createAirport.html', error=error)
 
 
 # APPLICATION USE CASES
