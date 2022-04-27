@@ -1,0 +1,13 @@
+<p>This is the form for adding an airplane<p>
+
+<form action="/airplane" method="POST">
+    <input type="text" name = "ID" placeholder="ID" required/></br>
+    <input type="text" name = "airline_name" placeholder="airline_name" required/></br>
+    <input type="number" name = "number_of_seats" placeholder="number_of_seats" required/></br>
+    <input type="text" name = "manufacturer" placeholder="manufacturer" required/></br>
+    <input type="number" name = "age" placeholder="age" required/></br>
+    <input type="submit" value = Register />
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+    {% endif %}
+</form>

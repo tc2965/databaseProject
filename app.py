@@ -49,6 +49,11 @@ def customerRegister():
 def staffRegister(): 
     return render_template('staffRegister.html')
 
+@app.route('/createFlight')
+def createFlight(error): 
+    return render_template('createFlight.html', error=error)
+
+
 # APPLICATION USE CASES
 # 1. VIEW PUBLIC INFO
 @app.route('/airports', methods=['GET', 'POST'])
@@ -118,8 +123,8 @@ def loginAuth():
 # 2. CREATE FLIGHTS
 @app.route('/flights', methods=['GET', 'POST'])
 def flights():
-    if not session["username"]:
-        return None # should actually render template with login error 
+    if not session.get("username"):
+        return createFlight("Login first") # should actually render template with login error 
     if request.method == 'GET': 
         return dbmanager.findFutureAirlineFlights(session["username"])
     elif request.method == 'POST':
@@ -129,8 +134,8 @@ def flights():
 # 3. CHANGE FLIGHT STATUS
 @app.route('/flight_status', methods=['POST'])
 def flightStatus():
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'POST':
         status = request.form['status']
         flight_number = request.form['flight_number']
@@ -141,8 +146,8 @@ def flightStatus():
 # 4. ADD AIRPLANE 
 @app.route('/airplane', methods=['POST'])
 def airplane(): 
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'POST':
         airplane = airplane_parser.parse_args() 
         return dbmanager.addAirplane(airplane, session["username"])
@@ -150,8 +155,8 @@ def airplane():
 # 5. ADD AIRPORT 
 @app.route('/airport', methods=['POST'])
 def airport():
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'POST':
         airport = airport_parser.parse_args() 
         return dbmanager.addAirport(airport)
@@ -159,48 +164,48 @@ def airport():
 # 6. VIEW FLIGHT RATINGS 
 @app.route('/view_flight_ratings/<flight_number>', methods=['GET'])
 def viewFlightRatings(flight_number):
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewFlightRatings(flight_number, session["username"])
      
 # 7. VIEW MOST FREQUENT CUSTOMER 
 @app.route('/view_most_frequent_customer', methods=['GET'])
 def viewMostFrequentCustomer(): 
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewMostFrequentCustomer(session["username"])
 
 # 8. VIEW REPORT
 @app.route('/viewReport/<start>/<end>', methods=['GET'])
 def viewReportDate(start, end): 
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewReportDate(start, end, session["username"])
 
 # 9. VIEW EARNED REVENUE
 @app.route('/viewRevenue/<start>/<end>', methods=['GET'])
 def viewRevenue(start, end): 
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewRevenue(start, end, session["username"])
     
 # 10. VIEW EARNED REVENUE BY TRAVEL CLASS 
 @app.route('/viewRevenueTravelClass/<travel_class>', methods=['GET'])
 def viewRevenueTravelClass(travel_class):
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewRevenueTravelClass(travel_class, session["username"])
 
 # 11. VIEW TOP DESTINATIONS
 @app.route('/viewTopDestinations/<period>', methods=['GET'])
 def viewTopDestinations(period):
-    if not session["username"]:
-        return None 
+    if not session.get("username"):
+        return createFlight("Login first")
     if request.method == 'GET':
         return dbmanager.viewTopDestinations(period, session["username"])
 

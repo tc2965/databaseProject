@@ -1,0 +1,17 @@
+<p>This is the form for adding a flight<p>
+
+<form action="/flights" method="POST">
+    <input type="text" name = "flight_number" placeholder="flight_number" required/></br>
+    <input type="text" name = "airplane_id" placeholder="airplane_id" required/></br>
+    <input type="text" name = "departure_date_time" placeholder="departure_date_time" required/></br>
+    <input type="text" name = "departure_airport_code" placeholder="departure_airport_code" required/></br>
+    <input type="text" name = "arrival_date_time" placeholder="arrival_date_time" required/></br>
+    <input type="text" name = "arrival_airport_code" placeholder="arrival_airport_code" required/></br>
+    <input type="number" step="0.01" name = "base_price" placeholder="base_price" required/></br>
+    <input type="text" name = "status" placeholder="status" required/></br>
+    <input type="text" name = "airline_name" placeholder="airline_name" required/></br>
+    <input type="submit" value = Register />
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+    {% endif %}
+</form>

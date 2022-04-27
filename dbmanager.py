@@ -118,7 +118,6 @@ def convertToDict(field, lists):
 
 
 # AIRLINE STAFF USE CASE
-
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
 def findFutureAirlineFlights(username): 
     conn = createConnection() 
