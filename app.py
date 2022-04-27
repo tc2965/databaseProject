@@ -50,16 +50,16 @@ def staffRegister():
     return render_template('staffRegister.html')
 
 @app.route('/createFlight')
-def createFlight(error=None): 
-    return render_template('createFlight.html', error=error)
+def createFlight(message=None, error=None): 
+    return render_template('createFlight.html', message=message, error=error)
 
 @app.route('/createAirplane')
-def createAirplane(error=None): 
-    return render_template('createAirplane.html', error=error)
+def createAirplane(message=None, error=None): 
+    return render_template('createAirplane.html', message=message, error=error)
 
 @app.route('/createAirport')
-def createAirport(error=None): 
-    return render_template('createAirport.html', error=error)
+def createAirport(message=None, error=None): 
+    return render_template('createAirport.html', message=message, error=error)
 
 @app.route("/changeFlightStatus")
 def changeFlightStatus(message=None, error=None):
@@ -168,7 +168,7 @@ def flights():
 @app.route('/flight_status', methods=['POST'])
 def flightStatus():
     if not session.get("username"):
-        return None # todo render page with error
+        return changeFlightStatus(error="Login first")
     if request.method == 'POST':
         status = request.form['status']
         flight_number = request.form['flight_number']
@@ -181,10 +181,11 @@ def flightStatus():
 @app.route('/airplane', methods=['POST'])
 def airplane(): 
     if not session.get("username"):
-        return None # todo render page with error
+        return createAirplane(error="Login first")
     if request.method == 'POST':
         airplane = airplane_parser.parse_args() 
-        return dbmanager.addAirplane(airplane, session["username"])
+        message = dbmanager.addAirplane(airplane, session["username"])
+        return createAirplane(message=message)
 
 # 5. ADD AIRPORT 
 @app.route('/airport', methods=['POST'])

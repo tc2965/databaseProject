@@ -170,14 +170,15 @@ def changeFlightStatus(status, flight_number, departure_date_time, username):
 def addAirplane(airplane, username): 
     conn = createConnection()
     cursor = conn.cursor() 
-    staff = assertStaffPermission(username, airplane["airline_name"])
+    staff = assertStaffPermission(username, airplane["airline_name"], cursor)
     if not staff: 
         return None # todo raise 401 forbidden, trying to add an airplane outside of own company
     insertAirplane = f"INSERT INTO airplane VALUES ('%(ID)s', '%(airline_name)s', '%(number_of_seats)s', '%(manufacturer)s', '%(age)s')" % airplane
     cursor.execute(insertAirplane)
     conn.commit() 
     cursor.close()
-    return airplane["ID"]
+    id = airplane["ID"]
+    return f"Adding airplane {id} successful"
 
 # 5. ADD AIRPORT
 def addAirport(airport):
@@ -284,7 +285,7 @@ def viewTopDestinations(period, username):
 
 def assertStaffPermission(username, airline, cursor): 
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
-    if staff["airline"] == airline:
+    if staff["airline_name"] == airline:
         return staff 
     else:
         return None

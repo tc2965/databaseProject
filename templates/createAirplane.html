@@ -6,8 +6,11 @@
     <input type="number" name = "number_of_seats" placeholder="number_of_seats" required/></br>
     <input type="text" name = "manufacturer" placeholder="manufacturer" required/></br>
     <input type="number" name = "age" placeholder="age" required/></br>
-    <input type="submit" value = Register />
+    <input type="submit" value = Submit />
     {% if error %}
         <p class="error"><strong>Error:</strong> {{error}}</p>
     {% endif %}
+    {% if message %}
+    <p class="message">{{message}}</p>
+{% endif %}
 </form>
