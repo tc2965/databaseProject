@@ -106,16 +106,7 @@ def searchFlights(source, destination, departure_date):
     cursor.execute(query)
     matchingFlights = cursor.fetchall()
     cursor.close()
-    return convertToDict("flight_number", matchingFlights)
-
-def convertToDict(field, lists): 
-    print(lists)
-    dict = {}
-    for elem in lists: 
-        dict[elem[field]] = elem 
-    print(dict)
-    return dict
-
+    return {"data": matchingFlights}
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
@@ -124,13 +115,19 @@ def findFutureAirlineFlightsTime(start, end, username):
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    start = start.strftime("%Y-%m-%d")
-    end = start.strftime("%Y-%m-%d")
+    today = datetime.today()
+    if start is None and end is None: 
+        start = today.strftime("%Y-%m-%d")
+        end = (today + relativedelta(months=3)).strftime("%Y-%m-%d")
+    elif start is None: 
+        start = today.strftime("%Y-%m-%d")
+    elif end is "None":
+        end = today.strftime("%Y-%m-%d")
     query = f"SELECT * FROM flight WHERE (departure_date_time BETWEEN '%s' AND '%s') AND airline_name = '%s'" % (start, end, airline)
     cursor.execute(query)
     flights = cursor.fetchall() 
     cursor.close() 
-    return flights
+    return {"data": flights}
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
 def findFutureAirlineFlightsAirport(way_type, airport, username): 
@@ -139,13 +136,13 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
     if way_type == "source":
-        query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND airline = '%s'" % (airport, airline)
+        query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND airline_name = '%s'" % (airport, airline)
     elif way_type == "destination": 
-        query = f"SELECT * FROM flight WHERE arrival_airport_code = '%s' AND airline = '%s'" % (airport, airline)
+        query = f"SELECT * FROM flight WHERE arrival_airport_code = '%s' AND airline_name = '%s'" % (airport, airline)
     cursor.execute(query)
     flights = cursor.fetchall() 
     cursor.close() 
-    return flights
+    return {"data" : flights}
 
 # 2. CREATE NEW FLIGHTS 
 def createFlight(flight): 

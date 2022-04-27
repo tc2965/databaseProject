@@ -127,17 +127,25 @@ def loginAuth():
 		return render_template('login.html', error=error)
 
 # AIRLINE STAFF USE CASES
-# 1. VIEW FUTURE FLIGHTS BY 30 DAYS/RANGE OF DATES
+# 1. VIEW FUTURE FLIGHTS BY RANGE OF DATES
 @app.route('/view_flights/time/<start>/<end>', methods=['GET'])
 def view_flights_time(start, end):
     if not session.get("username"):
         return createFlight("Login first")
     if request.method == 'GET': 
         return dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])
+    
+# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
+@app.route('/view_flights/time/default', methods=['GET'])
+def view_flights_time_default():
+    if not session.get("username"):
+        return createFlight("Login first")
+    if request.method == 'GET': 
+        return dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
 @app.route('/view_flights/<type>/<airport>', methods=['GET'])
-def view_flights_time(type, airport):
+def view_flights_airports(type, airport):
     if not session.get("username"):
         return createFlight("Login first")
     if request.method == 'GET': 
