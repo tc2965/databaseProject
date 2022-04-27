@@ -1,9 +1,10 @@
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from models import CUSTOMER, STAFF
+from utils import CUSTOMER, STAFF
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
+from dateutil.relativedelta import *
 
 load_dotenv()
 host = os.environ.get("HOST")
@@ -124,7 +125,8 @@ def findFutureAirlineFlights(username):
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    fromToday30 = datetime.today().strftime("%Y-%m-%d") + timedelta(days=30)
+    fromToday30 = datetime.today() + relativedelta(days=30)
+    fromToday30 = fromToday30.strftime("%Y-%m-%d")
     query = f"SELECT * FROM flight WHERE departure_date_time < '%s' AND airline_name = '%s'" % fromToday30, airline
     cursor.execute(query)
     flights = cursor.fetchall() 
@@ -141,6 +143,7 @@ def createFlight(flight):
     cursor.close() 
     return flight["flight_number"]
 
+# 3. CHANGE FLIGHT STATUS
 def changeFlightStatus(status, flight_number, departure_date_time, username): 
     conn = createConnection()
     cursor = conn.cursor() 
@@ -151,3 +154,128 @@ def changeFlightStatus(status, flight_number, departure_date_time, username):
     conn.commit() 
     cursor.close()
     return flight_number
+
+# 4. ADD AIRPLANE 
+def addAirplane(airplane, username): 
+    conn = createConnection()
+    cursor = conn.cursor() 
+    staff = assertStaffPermission(username, airplane["airline_name"])
+    if not staff: 
+        return None # todo raise 401 forbidden, trying to add an airplane outside of own company
+    insertAirplane = f"INSERT INTO airplane VALUES ('%(ID)s', '%(airline_name)s', '%(number_of_seats)s', '%(manufacturer)s', '%(age)s')" % airplane
+    cursor.execute(insertAirplane)
+    conn.commit() 
+    cursor.close()
+    return airplane["ID"]
+
+# 5. ADD AIRPORT
+def addAirport(airport):
+    conn = createConnection()
+    cursor = conn.cursor()
+    insertAirport = f"INSERT INTO airport VALUES ('%(airport_code)s', '%(name)s', '%(city)s', '%(country)s', '%(type)s')" % airport
+    cursor.execute(insertAirport)
+    conn.commit()
+    cursor.close()
+    return airport["airport_code"]
+
+# 6. VIEW FLIGHT RATINGS 
+def viewFlightRatings(flight_number, username):
+    conn = createConnection()
+    cursor = conn.cursor() 
+    findFlight = f"SELECT * FROM flight WHERE flight_number='%s'" % flight_number
+    cursor.execute(findFlight)
+    flights = cursor.fetchall() 
+    airline = flights[0]["airline_name"]
+    
+    staff = assertStaffPermission(username, airline)
+    if not staff:
+        return None # todo raise 401 forbidden, trying to see ratings outside of own company
+    query = f"SELECT * FROM ratings RIGHT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = '%s'" % flight_number
+    cursor.execute(query)
+    ratings = cursor.fetchall()
+    cursor.close()
+    return ratings
+    
+
+# 7. VIEW MOST FREQUENT CUSTOMER
+def viewMostFrequentCustomer(username):
+    conn = createConnection()
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    # todo query
+    
+# 8. VIEW REPORTS 
+def viewReportDate(start, end, username):
+    conn = createConnection()
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    query = f"SELECT COUNT(DISTINCT ticket_id) FROM purchases WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    cursor.execute(query)
+    numTicket = cursor.fetchone()
+    cursor.close()
+    return numTicket
+
+# 9. VIEW REVENUE
+def viewRevenue(start, end, username):
+    # create connection and grab airline
+    conn = createConnection()
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    
+    totalBasePriceQuery = f"SELECT SUM(base_price) FROM (flight NATURAL JOIN ticket) WHERE airline_name = '%s' AND (departure_date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    cursor.execute(totalBasePriceQuery)
+    totalBasePrice = cursor.fetchone()
+    cursor.close()
+    
+    totalSoldPriceQuery = f"SELECT SUM(sold_price) FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    cursor.execute(totalSoldPriceQuery)
+    totalSoldPrice = cursor.fetchone()
+    cursor.close()
+    return totalSoldPrice - totalBasePrice
+
+# 10. VIEW REVENUE TRAVEL CLASS  
+def viewRevenueTravelClass(travel_class, username):
+    # create connection and grab airline
+    conn = createConnection()
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    
+    totalSoldPriceQuery = f"SELECT SUM(sold_price) FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND travel_class = '%s'" % (airline, travel_class)
+    cursor.execute(totalSoldPriceQuery)
+    totalSoldPrice = cursor.fetchone()
+    cursor.close()
+    
+    return totalSoldPrice
+    
+# 11. VIEW TOP DESTINATIONS
+def viewTopDestinations(period, username):
+    # create connection and grab airline
+    conn = createConnection()
+    cursor = conn.cursor()
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    airline = staff["airline_name"]
+    start = datetime.today() + relativedelta(months=-3)
+    end = datetime.today()
+    
+    cityCountryTicketsSoldquery = (
+        "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = '%s' AND departure_date_time BETWEEN '%s' AND '%s' GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;"
+        "SELECT city, country, tickets_sold FROM airport_count NATURAL JOIN airport GROUP BY city, country ORDER BY tickets_sold DESC LIMIT 3" % (airline, start, end))
+    cursor.execute(cityCountryTicketsSoldquery)
+    cityCountryTicketsSold = cursor.fetchall()
+    deleteViewQuery = "DROP view airport_count;"
+    cursor.execute(deleteViewQuery)
+    cursor.close()
+    return cityCountryTicketsSold
+
+def assertStaffPermission(username, airline, cursor): 
+    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    if staff["airline"] == airline:
+        return staff 
+    else:
+        return None
+
+
