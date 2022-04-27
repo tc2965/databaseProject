@@ -164,7 +164,7 @@ def changeFlightStatus(status, flight_number, departure_date_time, username):
     cursor.execute(updateFlightStatus)
     conn.commit() 
     cursor.close()
-    return flight_number
+    return f"Changing flight #{flight_number} successful"
 
 # 4. ADD AIRPLANE 
 def addAirplane(airplane, username): 

@@ -61,6 +61,9 @@ def createAirplane(error=None):
 def createAirport(error=None): 
     return render_template('createAirport.html', error=error)
 
+@app.route("/changeFlightStatus")
+def changeFlightStatus(message=None, error=None):
+    return render_template("changeFlightStatus.html", message=message, error=error)
 
 # APPLICATION USE CASES
 # 1. VIEW PUBLIC INFO
@@ -131,7 +134,7 @@ def loginAuth():
 @app.route('/view_flights/time/<start>/<end>', methods=['GET'])
 def view_flights_time(start, end):
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET': 
         return dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])
     
@@ -139,7 +142,7 @@ def view_flights_time(start, end):
 @app.route('/view_flights/time/default', methods=['GET'])
 def view_flights_time_default():
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET': 
         return dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])
 
@@ -147,15 +150,16 @@ def view_flights_time_default():
 @app.route('/view_flights/<type>/<airport>', methods=['GET'])
 def view_flights_airports(type, airport):
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET': 
         return dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])
     
+# 1. SEE ALL CUSTOMERS OF PARTICULAR FLIGHT
 # 2. CREATE FLIGHTS
 @app.route('/flights', methods=['GET', 'POST'])
 def flights():
     if not session.get("username"):
-        return createFlight("Login first") # should actually render template with login error 
+        return createFlight("Login first")
     if request.method == 'POST':
         flight = flight_parser.parse_args()
         return dbmanager.createFlight(flight)
@@ -164,19 +168,20 @@ def flights():
 @app.route('/flight_status', methods=['POST'])
 def flightStatus():
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'POST':
         status = request.form['status']
         flight_number = request.form['flight_number']
         departure_date_time = request.form['departure_date_time']
         
-        return dbmanager.changeFlightStatus(status, flight_number, departure_date_time, session["username"])
+        message = dbmanager.changeFlightStatus(status, flight_number, departure_date_time, session["username"])
+        return changeFlightStatus(message=message)
         
 # 4. ADD AIRPLANE 
 @app.route('/airplane', methods=['POST'])
 def airplane(): 
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'POST':
         airplane = airplane_parser.parse_args() 
         return dbmanager.addAirplane(airplane, session["username"])
@@ -185,7 +190,7 @@ def airplane():
 @app.route('/airport', methods=['POST'])
 def airport():
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'POST':
         airport = airport_parser.parse_args() 
         return dbmanager.addAirport(airport)
@@ -194,7 +199,7 @@ def airport():
 @app.route('/view_flight_ratings/<flight_number>', methods=['GET'])
 def viewFlightRatings(flight_number):
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewFlightRatings(flight_number, session["username"])
      
@@ -202,7 +207,7 @@ def viewFlightRatings(flight_number):
 @app.route('/view_most_frequent_customer', methods=['GET'])
 def viewMostFrequentCustomer(): 
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewMostFrequentCustomer(session["username"])
 
@@ -210,7 +215,7 @@ def viewMostFrequentCustomer():
 @app.route('/viewReport/<start>/<end>', methods=['GET'])
 def viewReportDate(start, end): 
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewReportDate(start, end, session["username"])
 
@@ -218,7 +223,7 @@ def viewReportDate(start, end):
 @app.route('/viewRevenue/<start>/<end>', methods=['GET'])
 def viewRevenue(start, end): 
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewRevenue(start, end, session["username"])
     
@@ -226,7 +231,7 @@ def viewRevenue(start, end):
 @app.route('/viewRevenueTravelClass/<travel_class>', methods=['GET'])
 def viewRevenueTravelClass(travel_class):
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewRevenueTravelClass(travel_class, session["username"])
 
@@ -234,7 +239,7 @@ def viewRevenueTravelClass(travel_class):
 @app.route('/viewTopDestinations/<period>', methods=['GET'])
 def viewTopDestinations(period):
     if not session.get("username"):
-        return createFlight("Login first")
+        return None # todo render page with error
     if request.method == 'GET':
         return dbmanager.viewTopDestinations(period, session["username"])
 

@@ -1,0 +1,18 @@
+<p>This is the form for changing a flight's status<p>
+
+<form action="/flight_status" method="POST">
+    <select name="status">
+		<option value ="On Time">On Time</option>
+		<option value ="Delayed">Delayed</option>
+	</select>
+    </br>
+    <input type="text" name = "flight_number" placeholder="flight_number" required/></br>
+    <input type="text" name = "departure_date_time" placeholder="departure_date_time" required/></br>
+    <input type="submit" value = Submit />
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+    {% endif %}
+    {% if message %}
+        <p class="message">{{message}}</p>
+    {% endif %}
+</form>
