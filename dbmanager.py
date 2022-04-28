@@ -222,18 +222,17 @@ def viewMostFrequentCustomer(username):
     cursor.close() 
     return {"mostFrequentFlyer": mostFrequentFlyer}
     
-    
 # 8. VIEW REPORTS 
 def viewReportDate(start, end, username):
     conn = createConnection()
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    query = f"SELECT COUNT(DISTINCT ticket_id) FROM purchases WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    query = f"SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = '%s' AND date_time BETWEEN '%s' AND '%s' GROUP BY flight_number;" % (airline, start, end)
     cursor.execute(query)
-    numTicket = cursor.fetchone()
+    numTicket = cursor.fetchall()
     cursor.close()
-    return numTicket
+    return {"data": numTicket}
 
 # 9. VIEW REVENUE
 def viewRevenue(start, end, username):
