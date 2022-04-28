@@ -273,18 +273,22 @@ def viewTopDestinations(period, username):
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    start = datetime.today() + relativedelta(months=-3)
+    if period == "month":
+        start = datetime.today() + relativedelta(months=-3)
+    else:
+        start = datetime.today() + relativedelta(years=-3)
     end = datetime.today()
     
-    cityCountryTicketsSoldquery = (
-        "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = '%s' AND departure_date_time BETWEEN '%s' AND '%s' GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;"
-        "SELECT city, country, tickets_sold FROM airport_count NATURAL JOIN airport GROUP BY city, country ORDER BY tickets_sold DESC LIMIT 3" % (airline, start, end))
-    cursor.execute(cityCountryTicketsSoldquery)
+    countAirportQuery = "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = '%s' AND departure_date_time BETWEEN '%s' AND '%s' GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;" % (airline, start, end)
+    cursor.execute(countAirportQuery)
+    
+    orderDestinationsQuery = "SELECT city, country, tickets_sold FROM airport_count NATURAL JOIN airport GROUP BY city, country ORDER BY tickets_sold DESC LIMIT 3"
+    cursor.execute(orderDestinationsQuery)
     cityCountryTicketsSold = cursor.fetchall()
     deleteViewQuery = "DROP view airport_count;"
     cursor.execute(deleteViewQuery)
     cursor.close()
-    return cityCountryTicketsSold
+    return {"data": cityCountryTicketsSold}
 
 def assertStaffPermission(username, airline, cursor): 
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
