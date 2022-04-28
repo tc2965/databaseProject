@@ -242,16 +242,15 @@ def viewRevenue(start, end, username):
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
     
-    totalBasePriceQuery = f"SELECT SUM(base_price) FROM (flight NATURAL JOIN ticket) WHERE airline_name = '%s' AND (departure_date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    totalBasePriceQuery = f"SELECT SUM(base_price) as price FROM (flight NATURAL JOIN ticket) WHERE airline_name = '%s' AND (departure_date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
     cursor.execute(totalBasePriceQuery)
-    totalBasePrice = cursor.fetchone()
-    cursor.close()
+    totalBasePrice = cursor.fetchone()["price"]
     
-    totalSoldPriceQuery = f"SELECT SUM(sold_price) FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
+    totalSoldPriceQuery = f"SELECT SUM(sold_price) as price FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
     cursor.execute(totalSoldPriceQuery)
-    totalSoldPrice = cursor.fetchone()
+    totalSoldPrice = cursor.fetchone()["price"]
     cursor.close()
-    return totalSoldPrice - totalBasePrice
+    return {"revenue" : totalSoldPrice - totalBasePrice}
 
 # 10. VIEW REVENUE TRAVEL CLASS  
 def viewRevenueTravelClass(travel_class, username):
