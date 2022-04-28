@@ -198,6 +198,7 @@ def airport():
         return createAirport(message=message)
 
 # 6. VIEW FLIGHT RATINGS 
+# /view_flight_ratings/ER400
 @app.route('/view_flight_ratings/<flight_number>', methods=['GET'])
 def viewFlightRatings(flight_number):
     if not session.get("username"):
@@ -214,6 +215,7 @@ def viewMostFrequentCustomer():
         return dbmanager.viewMostFrequentCustomer(session["username"])
 
 # 8. VIEW REPORT
+# /viewReport/2022-01-01/2023-01-01
 @app.route('/viewReport/<start>/<end>', methods=['GET'])
 def viewReportDate(start, end): 
     if not session.get("username"):
@@ -222,6 +224,7 @@ def viewReportDate(start, end):
         return dbmanager.viewReportDate(start, end, session["username"])
 
 # 9. VIEW EARNED REVENUE
+# /viewRevenue/2022-01-01/2023-01-01
 @app.route('/viewRevenue/<start>/<end>', methods=['GET'])
 def viewRevenue(start, end): 
     if not session.get("username"):
@@ -230,6 +233,7 @@ def viewRevenue(start, end):
         return dbmanager.viewRevenue(start, end, session["username"])
     
 # 10. VIEW EARNED REVENUE BY TRAVEL CLASS 
+# /viewRevenueTravelClass/Economy
 @app.route('/viewRevenueTravelClass/<travel_class>', methods=['GET'])
 def viewRevenueTravelClass(travel_class):
     if not session.get("username"):
@@ -238,6 +242,8 @@ def viewRevenueTravelClass(travel_class):
         return dbmanager.viewRevenueTravelClass(travel_class, session["username"])
 
 # 11. VIEW TOP DESTINATIONS
+# /viewTopDestinations/month 
+# /viewTopDestinations/year
 @app.route('/viewTopDestinations/<period>', methods=['GET'])
 def viewTopDestinations(period):
     if not session.get("username"):

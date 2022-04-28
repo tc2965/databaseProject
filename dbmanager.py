@@ -276,7 +276,7 @@ def viewTopDestinations(period, username):
     if period == "month":
         start = datetime.today() + relativedelta(months=-3)
     else:
-        start = datetime.today() + relativedelta(years=-3)
+        start = datetime.today() + relativedelta(years=-1)
     end = datetime.today()
     
     countAirportQuery = "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = '%s' AND departure_date_time BETWEEN '%s' AND '%s' GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;" % (airline, start, end)
