@@ -121,7 +121,7 @@ def findFutureAirlineFlightsTime(start, end, username):
         end = (today + relativedelta(months=3)).strftime("%Y-%m-%d")
     elif start is None: 
         start = today.strftime("%Y-%m-%d")
-    elif end is "None":
+    elif end is None:
         end = today.strftime("%Y-%m-%d")
     query = f"SELECT * FROM flight WHERE (departure_date_time BETWEEN '%s' AND '%s') AND airline_name = '%s'" % (start, end, airline)
     cursor.execute(query)
@@ -182,6 +182,7 @@ def addAirplane(airplane, username):
 
 # 5. ADD AIRPORT
 def addAirport(airport):
+    print(airport)
     conn = createConnection()
     cursor = conn.cursor()
     insertAirport = f"INSERT INTO airport VALUES ('%(airport_code)s', '%(name)s', '%(city)s', '%(country)s', '%(type)s')" % airport

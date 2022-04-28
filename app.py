@@ -57,14 +57,6 @@ def createFlight(message=None, error=None):
 def createAirplane(message=None, error=None): 
     return render_template('createAirplane.html', message=message, error=error)
 
-@app.route('/createAirport')
-def createAirport(message=None, error=None): 
-    return render_template('createAirport.html', message=message, error=error)
-
-@app.route("/changeFlightStatus")
-def changeFlightStatus(message=None, error=None):
-    return render_template("changeFlightStatus.html", message=message, error=error)
-
 # APPLICATION USE CASES
 # 1. VIEW PUBLIC INFO
 @app.route('/airports', methods=['GET', 'POST'])
@@ -165,6 +157,10 @@ def flights():
         return dbmanager.createFlight(flight)
 
 # 3. CHANGE FLIGHT STATUS
+@app.route("/changeFlightStatus")
+def changeFlightStatus(message=None, error=None):
+    return render_template("changeFlightStatus.html", message=message, error=error)
+
 @app.route('/flight_status', methods=['POST'])
 def flightStatus():
     if not session.get("username"):
@@ -188,6 +184,10 @@ def airplane():
         return createAirplane(message=message)
 
 # 5. ADD AIRPORT 
+@app.route('/createAirport')
+def createAirport(message=None, error=None): 
+    return render_template('createAirport.html', message=message, error=error)
+
 @app.route('/airport', methods=['POST'])
 def airport():
     if not session.get("username"):
