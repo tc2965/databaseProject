@@ -98,6 +98,7 @@ def registerStaff(staff):
         return staff["username"]
 
 # 1. VIEW PUBLIC INFO A 
+# for round trips, just use this endpoint again and make departure = arrival of the first result
 def searchFlights(source, destination, departure_date):
     conn = createConnection()
     cursor = conn.cursor()
