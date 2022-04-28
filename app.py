@@ -50,11 +50,10 @@ def staffRegister():
     return render_template('staffRegister.html')
 
 # APPLICATION USE CASES
-# 1. VIEW PUBLIC INFO
+# 1. VIEW PUBLIC INFO A
 @app.route('/airports', methods=['GET', 'POST'])
 def airports(): 
 	if request.method == 'GET': 
-		# returns dict = {city1: airport_obj1, city2: airport_obj2 }
 		return dbmanager.getAllAirports()
 	elif request.method == 'POST': 
 		airport = airport_parser.parse_args()
@@ -70,8 +69,16 @@ def searchFlights():
     destination = request.form["destination"]
     departure = request.form["departure_date"]
     
-    # return render_template('home.html', username=session["username"], flights=dbmanager.searchFlights(source, destination, departure))
     return dbmanager.searchFlights(source, destination, departure)
+
+@app.route('/flight_status/view/', methods=['POST'])
+def viewFlightStatus(): 
+    airline = request.form["airline"]
+    flight_number = request.form["flight_number"]
+    arrival_date = request.form.get("arrival_date")
+    departure_date = request.form["departure_date"]
+    
+    return dbmanager.viewFlightStatus(airline, flight_number, departure_date, arrival_date)
 
 # 2. REGISTER
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])

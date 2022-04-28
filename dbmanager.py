@@ -97,6 +97,7 @@ def registerStaff(staff):
         cursor.close()
         return staff["username"]
 
+# 1. VIEW PUBLIC INFO A 
 def searchFlights(source, destination, departure_date):
     conn = createConnection()
     cursor = conn.cursor()
@@ -107,6 +108,19 @@ def searchFlights(source, destination, departure_date):
     matchingFlights = cursor.fetchall()
     cursor.close()
     return {"data": matchingFlights}
+
+# 1. VIEW PUBLIC INFO B
+def viewFlightStatus(airline, flight_number, departure, arrival=None):
+    conn = createConnection() 
+    cursor = conn.cursor()
+    if arrival: 
+        query = f"SELECT status FROM flight WHERE airline_name ='%s' AND flight_number = '%s' AND departure_date_time >= '%s' AND arrival_date_time >= '%s'" % (airline, flight_number, departure, arrival)
+    else:
+        query = f"SELECT status FROM flight WHERE airline_name ='%s' AND flight_number = '%s' AND departure_date_time >= '%s'" % (airline, flight_number, departure)
+    cursor.execute(query)
+    status = cursor.fetchone() 
+    cursor.close()
+    return {"status": status}
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
