@@ -259,13 +259,12 @@ def viewRevenueTravelClass(travel_class, username):
     cursor = conn.cursor()
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
-    
-    totalSoldPriceQuery = f"SELECT SUM(sold_price) FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND travel_class = '%s'" % (airline, travel_class)
+
+    totalSoldPriceQuery = f"SELECT travel_class, SUM(sold_price) as price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' GROUP BY travel_class" % (airline)
     cursor.execute(totalSoldPriceQuery)
-    totalSoldPrice = cursor.fetchone()
+    totalSoldPrice = cursor.fetchall()
     cursor.close()
-    
-    return totalSoldPrice
+    return {"data":totalSoldPrice}
     
 # 11. VIEW TOP DESTINATIONS
 def viewTopDestinations(period, username):
