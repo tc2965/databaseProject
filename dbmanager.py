@@ -1,7 +1,7 @@
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from utils import CUSTOMER, STAFF
+from utils.utils import CUSTOMER, STAFF
 import hashlib
 from datetime import datetime
 from dateutil.relativedelta import *

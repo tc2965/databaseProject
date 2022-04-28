@@ -5,7 +5,7 @@ from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser
+from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser
 import dbmanager
 
 #Initialize the app from Flask
