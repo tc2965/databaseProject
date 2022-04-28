@@ -11,4 +11,4 @@ DB={your db name}
 `pip install -r requirements.txt` to install modules
 
 ## Run 
-Run your local sql server, and then `python3 app.py` in terminal
+Run your local sql server, and then `python3 app.py` or `make run app` in terminal
