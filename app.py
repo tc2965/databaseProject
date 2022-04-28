@@ -49,14 +49,6 @@ def customerRegister():
 def staffRegister(): 
     return render_template('staffRegister.html')
 
-@app.route('/createFlight')
-def createFlight(message=None, error=None): 
-    return render_template('createFlight.html', message=message, error=error)
-
-@app.route('/createAirplane')
-def createAirplane(message=None, error=None): 
-    return render_template('createAirplane.html', message=message, error=error)
-
 # APPLICATION USE CASES
 # 1. VIEW PUBLIC INFO
 @app.route('/airports', methods=['GET', 'POST'])
@@ -148,6 +140,10 @@ def view_flights_airports(type, airport):
     
 # 1. SEE ALL CUSTOMERS OF PARTICULAR FLIGHT
 # 2. CREATE FLIGHTS
+@app.route('/createFlight')
+def createFlight(message=None, error=None): 
+    return render_template('createFlight.html', message=message, error=error)
+
 @app.route('/flights', methods=['GET', 'POST'])
 def flights():
     if not session.get("username"):
@@ -174,6 +170,10 @@ def flightStatus():
         return changeFlightStatus(message=message)
         
 # 4. ADD AIRPLANE 
+@app.route('/createAirplane')
+def createAirplane(message=None, error=None): 
+    return render_template('createAirplane.html', message=message, error=error)
+
 @app.route('/airplane', methods=['POST'])
 def airplane(): 
     if not session.get("username"):
@@ -191,10 +191,11 @@ def createAirport(message=None, error=None):
 @app.route('/airport', methods=['POST'])
 def airport():
     if not session.get("username"):
-        return None # todo render page with error
+        return createAirport(error="Login first") # todo render page with error
     if request.method == 'POST':
         airport = airport_parser.parse_args() 
-        return dbmanager.addAirport(airport)
+        message = dbmanager.addAirport(airport)
+        return createAirport(message=message)
 
 # 6. VIEW FLIGHT RATINGS 
 @app.route('/view_flight_ratings/<flight_number>', methods=['GET'])

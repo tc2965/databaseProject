@@ -182,14 +182,14 @@ def addAirplane(airplane, username):
 
 # 5. ADD AIRPORT
 def addAirport(airport):
-    print(airport)
     conn = createConnection()
     cursor = conn.cursor()
     insertAirport = f"INSERT INTO airport VALUES ('%(airport_code)s', '%(name)s', '%(city)s', '%(country)s', '%(type)s')" % airport
     cursor.execute(insertAirport)
     conn.commit()
     cursor.close()
-    return airport["airport_code"]
+    code = airport["airport_code"]
+    return f"Adding airport {code} successful"
 
 # 6. VIEW FLIGHT RATINGS 
 def viewFlightRatings(flight_number, username):
@@ -200,14 +200,14 @@ def viewFlightRatings(flight_number, username):
     flights = cursor.fetchall() 
     airline = flights[0]["airline_name"]
     
-    staff = assertStaffPermission(username, airline)
+    staff = assertStaffPermission(username, airline, cursor)
     if not staff:
         return None # todo raise 401 forbidden, trying to see ratings outside of own company
-    query = f"SELECT * FROM ratings RIGHT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = '%s'" % flight_number
+    query = f"SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = '%s'" % flight_number
     cursor.execute(query)
     ratings = cursor.fetchall()
     cursor.close()
-    return ratings
+    return {"data": ratings}
     
 
 # 7. VIEW MOST FREQUENT CUSTOMER
