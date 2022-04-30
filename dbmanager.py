@@ -221,8 +221,9 @@ def viewFlightRatings(flight_number, username):
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):
     staff = checkUserExistsInDb("airline_staff", username)
-    query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
-    mostFrequentFlyer = executeQuery(query)
+    airline = staff["airline_name"]
+    query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
+    mostFrequentFlyer = executeQuery(query, airline)
     return {"mostFrequentFlyer": mostFrequentFlyer}
     
 # 8. VIEW REPORTS 
