@@ -210,6 +210,13 @@ def viewMostFrequentCustomer():
     if request.method == 'GET':
         return dbmanager.viewMostFrequentCustomer(session["username"])
 
+@app.route('/view_customer_flights/<customer_email>', methods=['GET'])
+def viewCustomerFlights(customer_email):
+    if not session.get("username"):
+        return None 
+    if request.method == 'GET':
+        return dbmanager.viewCustomerFlights(customer_email, session["username"])
+
 # 8. VIEW REPORT
 # /viewReport/2022-01-01/2023-01-01
 @app.route('/viewReport/<start>/<end>', methods=['GET'])

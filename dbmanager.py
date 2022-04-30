@@ -225,6 +225,14 @@ def viewMostFrequentCustomer(username):
     query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
     mostFrequentFlyer = executeQuery(query, airline)
     return {"mostFrequentFlyer": mostFrequentFlyer}
+
+def viewCustomerFlights(customer_email, username):
+    staff = checkUserExistsInDb("airline_staff", username)
+    airline = staff["airline_name"]
+    query = "SELECT flight_number FROM purchases INNER JOIN ticket ON purchases.ticket_id = ticket.ID AND customer_email = %s AND airline_name = %s"
+    params = (customer_email, airline)
+    flights = executeQuery(query, params)
+    return {"data": flights}
     
 # 8. VIEW REPORTS 
 def viewReportDate(start, end, username):
