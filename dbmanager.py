@@ -5,6 +5,7 @@ from utils.utils import CUSTOMER, STAFF
 import hashlib
 from datetime import datetime
 from dateutil.relativedelta import *
+from flask import abort
 
 load_dotenv()
 host = os.environ.get("HOST")
@@ -27,6 +28,8 @@ def createConnection():
                        connect_timeout=100)
 
 def executeQuery(query, params=None, fetchOne=False): 
+    print(query)
+    print(params)
     try:
         conn = createConnection()
         cursor = conn.cursor()
@@ -46,6 +49,8 @@ def executeQuery(query, params=None, fetchOne=False):
         print(params)
     
 def executeCommitQuery(query, params): 
+    print(query)
+    print(params)
     try: 
         conn = createConnection()
         cursor = conn.cursor()
@@ -156,9 +161,7 @@ def findFutureAirlineFlightsTime(start, end, username):
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
 def findFutureAirlineFlightsAirport(way_type, airport, username): 
-    conn = createConnection() 
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     if way_type == "source":
         query = "SELECT * FROM flight WHERE departure_airport_code = %s AND airline_name = %s"
@@ -170,8 +173,6 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
 
 # 2. CREATE NEW FLIGHTS 
 def createFlight(flight): 
-    conn = createConnection() 
-    cursor = conn.cursor()
     query = "INSERT INTO flight VALUES (%(flight_number)s, %(airplane_id)s, %(departure_date_time)s, %(departure_airport_code)s, %(arrival_date_time)s, %(arrival_airport_code)s, %(base_price)s, %(status)s, %(airline_name)s)"
     params = flight
     executeCommitQuery(query, params)
@@ -190,8 +191,6 @@ def changeFlightStatus(status, flight_number, departure_date_time, username):
 # 4. ADD AIRPLANE 
 def addAirplane(airplane, username): 
     staff = assertStaffPermission(username, airplane["airline_name"])
-    if not staff: 
-        return None # todo raise 401 forbidden, trying to add an airplane outside of own company
     insertAirplane = "INSERT INTO airplane VALUES (%(ID)s, %(airline_name)s, %(number_of_seats)s, %(manufacturer)s, %(age)s)"
     params = airplane
     executeCommitQuery(insertAirplane, params)
@@ -213,9 +212,7 @@ def viewFlightRatings(flight_number, username):
     flights = executeQuery(findFlight, params)
     airline = flights[0]["airline_name"]
     
-    staff = assertStaffPermission(username, airline)
-    if not staff:
-        return None # todo raise 401 forbidden, trying to see ratings outside of own company
+    assertStaffPermission(username, airline)
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
     params = flight_number
     ratings = executeQuery(query, params)
@@ -224,8 +221,6 @@ def viewFlightRatings(flight_number, username):
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):
     staff = checkUserExistsInDb("airline_staff", username)
-    airline = staff["airline_name"]
-    # todo query
     query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
     mostFrequentFlyer = executeQuery(query)
     return {"mostFrequentFlyer": mostFrequentFlyer}
@@ -289,4 +284,6 @@ def assertStaffPermission(username, airline):
     if staff["airline_name"] == airline:
         return staff 
     else:
-        return None
+        otherAirline = staff["airline_name"]
+        print(f"{otherAirline} employee {username} does not have access to {airline}")
+        return abort(403, f"{otherAirline} employee {username} does not have access to {airline}")
