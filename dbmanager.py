@@ -290,5 +290,3 @@ def assertStaffPermission(username, airline):
         return staff 
     else:
         return None
-
-

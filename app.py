@@ -51,17 +51,6 @@ def staffRegister():
 
 # APPLICATION USE CASES
 # 1. VIEW PUBLIC INFO A
-@app.route('/airports', methods=['GET', 'POST'])
-def airports(): 
-	if request.method == 'GET': 
-		return dbmanager.getAllAirports()
-	elif request.method == 'POST': 
-		airport = airport_parser.parse_args()
-		return dbmanager.createAirport(airport)
-	else: 
-		# todo raise 405 method not allowed
-		return None
-
 @app.route('/flight/search/', methods=['POST'])
 def searchFlights(): 
     # if it's round trip, just use this endpoint again
