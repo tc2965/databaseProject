@@ -26,41 +26,67 @@ def createConnection():
                        max_allowed_packet=16777216, 
                        connect_timeout=100)
 
+def executeQuery(query, params=None, fetchOne=False): 
+    try:
+        conn = createConnection()
+        cursor = conn.cursor()
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        if fetchOne:
+            data = cursor.fetchone() 
+        else: 
+            data = cursor.fetchall()
+        cursor.close() 
+        return data
+    except Exception as e: 
+        print(e)
+        print(query)
+        print(params)
+    
+def executeCommitQuery(query, params): 
+    try: 
+        conn = createConnection()
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        conn.commit()
+        cursor.close()
+    except Exception as e:
+        print(e)
+        print(query)
+        print(params)
+    
 
-def checkUserExistsInDb(typeUser, field, username, cursor):
+def checkUserExistsInDb(typeUser, username):
 	#executes query
-    query = "SELECT * FROM %s WHERE %s = '%s'" % (typeUser, field, username)
-    cursor.execute(query)
-	#stores the results in a variable
-    data = cursor.fetchone()
-	#use fetchall() if you are expecting more than 1 data row
+    if typeUser == "customer":
+        query = "SELECT * FROM customer WHERE email = %s"
+    else: 
+        query = "SELECT * FROM airline_staff WHERE username = %s"
+    params = (username)
+    data = executeQuery(query, params, True)
     return data
         
 def checkUserLogin(typeUser, username, password):
-    conn = createConnection()
-    cursor = conn.cursor()
     # incoming pass must be hashed to check
     # stored pass can't be decrypted (md5 is one way hash)
     password = hashlib.md5(password.encode()).hexdigest() 
     if typeUser == "customer":
         # customers don't use username
-        query = "SELECT * FROM %s WHERE email = '%s' AND customer_password = '%s'" % (typeUser, username, password)
+        query = "SELECT * FROM customer WHERE email = %s AND customer_password = %s"
     elif typeUser == "airline_staff":
-        query = "SELECT * FROM %s WHERE username = '%s' AND user_password = '%s'" % (typeUser, username, password)
-    cursor.execute(query)
-    data = cursor.fetchone()
-    cursor.close()
+        query = "SELECT * FROM airline_staff WHERE username = %s AND user_password = %s"
+    params = (username, password)
+    data = executeQuery(query, params, True)
     return data
 
 def registerCustomer(customer): 
     """
     dict[email, name, ...]
     """
-    conn = createConnection()
-    cursor = conn.cursor()
-    exists = checkUserExistsInDb("customer", "email", customer["email"], cursor)
+    exists = checkUserExistsInDb("customer", customer["email"])
     if (exists): 
-        cursor.close()
         return False 
     else:
         password = customer["password"]
@@ -68,67 +94,52 @@ def registerCustomer(customer):
         
         # todo - I'm pretty sure there's a better way of writing this
         # Tried it another way with string concatenation but it felt dumb
-        insertCustomer = f"INSERT INTO customer VALUES ('%(email)s', '%(name)s', '%(password)s', '%(building_number)s', '%(street)s', '%(city)s', '%(state)s', '%(phone_number)s', '%(passport_number)s', '%(passport_expiration)s', '%(passport_country)s', '%(date_of_birth)s' )" % customer
-        cursor.execute(insertCustomer)
-        conn.commit() 
-        cursor.close()
+        insertCustomer = "INSERT INTO customer VALUES (%(email)s, %(name)s, %(password)s, %(building_number)s, %(street)s, %(city)s, %(state)s, %(phone_number)s, %(passport_number)s, %(passport_expiration)s, %(passport_country)s, %(date_of_birth)s)"
+        params = customer
+        executeCommitQuery(insertCustomer, params)
         return customer["email"]
 
 def registerStaff(staff): 
     """
     dict[email, name, ...]
     """
-    conn = createConnection()
-    cursor = conn.cursor()
-    exists = checkUserExistsInDb("airline_staff", "username", staff["username"], cursor)
+    exists = checkUserExistsInDb("airline_staff", staff["username"])
     if (exists): 
-        cursor.close()
         return False 
     else: 
         password = staff["password"]
         staff["password"] = hashlib.md5(password.encode()).hexdigest()
-        insertStaff = f"INSERT INTO airline_staff VALUES ('%(username)s', '%(password)s', '%(first_name)s', '%(last_name)s', '%(date_of_birth)s', '%(airline)s')" % staff
-        cursor.execute(insertStaff)
-        conn.commit()
+        insertStaff = "INSERT INTO airline_staff VALUES (%(username)s, %(password)s, %(first_name)s, %(last_name)s, %(date_of_birth)s, %(airline)s)"
+        params = staff
+        executeCommitQuery(insertStaff, params)
         # now insert phone
-        insertStaffPhone = f"INSERT INTO airline_staff_phones VALUES ('%(username)s', '%(phone_number)s')" % staff
-        cursor.execute(insertStaffPhone)
-        conn.commit() 
-        cursor.close()
+        insertStaffPhone = "INSERT INTO airline_staff_phones VALUES (%(username)s, %(phone_number)s)"
+        executeCommitQuery(insertStaffPhone, staff)
         return staff["username"]
 
 # 1. VIEW PUBLIC INFO A 
 # for round trips, just use this endpoint again and make departure = arrival of the first result
 def searchFlights(source, destination, departure_date):
-    conn = createConnection()
-    cursor = conn.cursor()
-    # this query is wrong 
-    query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND arrival_airport_code = '%s' AND departure_date_time > '%s'" % (source, destination, departure_date)
-    cursor = conn.cursor() 
-    cursor.execute(query)
-    matchingFlights = cursor.fetchall()
-    cursor.close()
+    query = "SELECT * FROM flight WHERE departure_airport_code = %s AND arrival_airport_code = %s AND departure_date_time > %s"
+    params = (source, destination, departure_date)
+    matchingFlights = executeQuery(query, params)
     return {"data": matchingFlights}
 
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
-    conn = createConnection() 
-    cursor = conn.cursor()
     if arrival: 
-        query = f"SELECT status FROM flight WHERE airline_name ='%s' AND flight_number = '%s' AND departure_date_time >= '%s' AND arrival_date_time >= '%s'" % (airline, flight_number, departure, arrival)
+        query = "SELECT status FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
+        params = (airline, flight_number, departure, arrival)
     else:
-        query = f"SELECT status FROM flight WHERE airline_name ='%s' AND flight_number = '%s' AND departure_date_time >= '%s'" % (airline, flight_number, departure)
-    cursor.execute(query)
-    status = cursor.fetchone() 
-    cursor.close()
+        query = "SELECT status FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
+        params = (airline, flight_number, departure)
+    status = executeQuery(query, params, True)
     return {"status": status}
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
 def findFutureAirlineFlightsTime(start, end, username): 
-    conn = createConnection() 
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     today = datetime.today()
     if start is None and end is None: 
@@ -138,10 +149,9 @@ def findFutureAirlineFlightsTime(start, end, username):
         start = today.strftime("%Y-%m-%d")
     elif end is None:
         end = today.strftime("%Y-%m-%d")
-    query = f"SELECT * FROM flight WHERE (departure_date_time BETWEEN '%s' AND '%s') AND airline_name = '%s'" % (start, end, airline)
-    cursor.execute(query)
-    flights = cursor.fetchall() 
-    cursor.close() 
+    query = "SELECT * FROM flight WHERE (departure_date_time BETWEEN %s AND %s) AND airline_name = %s"
+    params = (start, end, airline)
+    flights = executeQuery(query, params)
     return {"data": flights}
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
@@ -151,142 +161,111 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
     staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
     airline = staff["airline_name"]
     if way_type == "source":
-        query = f"SELECT * FROM flight WHERE departure_airport_code = '%s' AND airline_name = '%s'" % (airport, airline)
+        query = "SELECT * FROM flight WHERE departure_airport_code = %s AND airline_name = %s"
     elif way_type == "destination": 
-        query = f"SELECT * FROM flight WHERE arrival_airport_code = '%s' AND airline_name = '%s'" % (airport, airline)
-    cursor.execute(query)
-    flights = cursor.fetchall() 
-    cursor.close() 
+        query = "SELECT * FROM flight WHERE arrival_airport_code = %s AND airline_name = %s"
+    params = (airport, airline)
+    flights = executeQuery(query, params)
     return {"data" : flights}
 
 # 2. CREATE NEW FLIGHTS 
 def createFlight(flight): 
     conn = createConnection() 
     cursor = conn.cursor()
-    query = f"INSERT INTO flight VALUES ('%(flight_number)s', '%(airplane_id)s', '%(departure_date_time)s', '%(departure_airport_code)s', '%(arrival_date_time)s', '%(arrival_airport_code)s', '%(base_price)s', '%(status)s', '%(airline_name)s')" % flight
-    cursor.execute(query)
-    conn.commit() 
-    cursor.close() 
-    return flight["flight_number"]
+    query = "INSERT INTO flight VALUES (%(flight_number)s, %(airplane_id)s, %(departure_date_time)s, %(departure_airport_code)s, %(arrival_date_time)s, %(arrival_airport_code)s, %(base_price)s, %(status)s, %(airline_name)s)"
+    params = flight
+    executeCommitQuery(query, params)
+    number = flight["flight_number"]
+    return f"Creating flight {number} successful"
 
 # 3. CHANGE FLIGHT STATUS
 def changeFlightStatus(status, flight_number, departure_date_time, username): 
-    conn = createConnection()
-    cursor = conn.cursor() 
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    updateFlightStatus = f"UPDATE flight SET status = '%s' WHERE flight_number = '%s' AND departure_date_time = '%s' AND airline_name = '%s'" % (status, flight_number, departure_date_time, airline)
-    cursor.execute(updateFlightStatus)
-    conn.commit() 
-    cursor.close()
+    updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time = %s AND airline_name = %s"
+    params = (status, flight_number, departure_date_time, airline)
+    executeCommitQuery(updateFlightStatus, params)
     return f"Changing flight #{flight_number} successful"
 
 # 4. ADD AIRPLANE 
 def addAirplane(airplane, username): 
-    conn = createConnection()
-    cursor = conn.cursor() 
-    staff = assertStaffPermission(username, airplane["airline_name"], cursor)
+    staff = assertStaffPermission(username, airplane["airline_name"])
     if not staff: 
         return None # todo raise 401 forbidden, trying to add an airplane outside of own company
-    insertAirplane = f"INSERT INTO airplane VALUES ('%(ID)s', '%(airline_name)s', '%(number_of_seats)s', '%(manufacturer)s', '%(age)s')" % airplane
-    cursor.execute(insertAirplane)
-    conn.commit() 
-    cursor.close()
+    insertAirplane = "INSERT INTO airplane VALUES (%(ID)s, %(airline_name)s, %(number_of_seats)s, %(manufacturer)s, %(age)s)"
+    params = airplane
+    executeCommitQuery(insertAirplane, params)
     id = airplane["ID"]
     return f"Adding airplane {id} successful"
 
 # 5. ADD AIRPORT
 def addAirport(airport):
-    conn = createConnection()
-    cursor = conn.cursor()
-    insertAirport = f"INSERT INTO airport VALUES ('%(airport_code)s', '%(name)s', '%(city)s', '%(country)s', '%(type)s')" % airport
-    cursor.execute(insertAirport)
-    conn.commit()
-    cursor.close()
+    insertAirport = "INSERT INTO airport VALUES (%(airport_code)s, %(name)s, %(city)s, %(country)s, %(type)s)"
+    params = airport
+    executeCommitQuery(insertAirport, params)
     code = airport["airport_code"]
     return f"Adding airport {code} successful"
 
 # 6. VIEW FLIGHT RATINGS 
 def viewFlightRatings(flight_number, username):
-    conn = createConnection()
-    cursor = conn.cursor() 
-    findFlight = f"SELECT * FROM flight WHERE flight_number='%s'" % flight_number
-    cursor.execute(findFlight)
-    flights = cursor.fetchall() 
+    findFlight = "SELECT * FROM flight WHERE flight_number = %s"
+    params = flight_number
+    flights = executeQuery(findFlight, params)
     airline = flights[0]["airline_name"]
     
-    staff = assertStaffPermission(username, airline, cursor)
+    staff = assertStaffPermission(username, airline)
     if not staff:
         return None # todo raise 401 forbidden, trying to see ratings outside of own company
-    query = f"SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = '%s'" % flight_number
-    cursor.execute(query)
-    ratings = cursor.fetchall()
-    cursor.close()
+    query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
+    params = flight_number
+    ratings = executeQuery(query, params)
     return {"data": ratings}
 
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     # todo query
     query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
-    cursor.execute(query)
-    mostFrequentFlyer = cursor.fetchone() 
-    cursor.close() 
+    mostFrequentFlyer = executeQuery(query)
     return {"mostFrequentFlyer": mostFrequentFlyer}
     
 # 8. VIEW REPORTS 
 def viewReportDate(start, end, username):
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    query = f"SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = '%s' AND date_time BETWEEN '%s' AND '%s' GROUP BY flight_number;" % (airline, start, end)
-    cursor.execute(query)
-    numTicket = cursor.fetchall()
-    cursor.close()
+    query = "SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = %s AND date_time BETWEEN %s AND %s GROUP BY flight_number;" 
+    params = (airline, start, end)
+    numTicket = executeQuery(query, params)
     return {"data": numTicket}
 
 # 9. VIEW REVENUE
 def viewRevenue(start, end, username):
     # create connection and grab airline
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     
-    totalBasePriceQuery = f"SELECT SUM(base_price) as price FROM (flight NATURAL JOIN ticket) WHERE airline_name = '%s' AND (departure_date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
-    cursor.execute(totalBasePriceQuery)
-    totalBasePrice = cursor.fetchone()["price"]
+    totalBasePriceQuery = "SELECT SUM(base_price) as price FROM (flight NATURAL JOIN ticket) WHERE airline_name = %s AND (departure_date_time BETWEEN %s AND %s)"
+    params = (airline, start, end)
+    totalBasePrice = executeQuery(totalBasePriceQuery, params, True)["price"]
     
-    totalSoldPriceQuery = f"SELECT SUM(sold_price) as price FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' AND (date_time BETWEEN '%s' AND '%s')" % (airline, start, end)
-    cursor.execute(totalSoldPriceQuery)
-    totalSoldPrice = cursor.fetchone()["price"]
-    cursor.close()
+    totalSoldPriceQuery = "SELECT SUM(sold_price) as price FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (date_time BETWEEN %s AND %s)"
+    totalSoldPrice = executeQuery(totalSoldPriceQuery, params, True)["price"]
     return {"revenue" : totalSoldPrice - totalBasePrice}
 
 # 10. VIEW REVENUE TRAVEL CLASS  
 def viewRevenueTravelClass(travel_class, username):
-    # create connection and grab airline
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
 
-    totalSoldPriceQuery = f"SELECT travel_class, SUM(sold_price) as price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = '%s' GROUP BY travel_class" % (airline)
-    cursor.execute(totalSoldPriceQuery)
-    totalSoldPrice = cursor.fetchall()
-    cursor.close()
+    totalSoldPriceQuery = "SELECT travel_class, SUM(sold_price) as price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class" 
+    params = airline
+    totalSoldPrice = executeQuery(totalSoldPriceQuery, params)
     return {"data":totalSoldPrice}
     
 # 11. VIEW TOP DESTINATIONS
 def viewTopDestinations(period, username):
-    # create connection and grab airline
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+    staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     if period == "month":
         start = datetime.today() + relativedelta(months=-3)
@@ -294,19 +273,19 @@ def viewTopDestinations(period, username):
         start = datetime.today() + relativedelta(years=-1)
     end = datetime.today()
     
-    countAirportQuery = "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = '%s' AND departure_date_time BETWEEN '%s' AND '%s' GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;" % (airline, start, end)
-    cursor.execute(countAirportQuery)
+    viewCountAirportQuery = "CREATE VIEW airport_count AS SELECT arrival_airport_code AS airport_code, COUNT(DISTINCT id) AS tickets_sold FROM ticket NATURAL JOIN flight WHERE airline_name = %s AND departure_date_time BETWEEN %s AND %s GROUP BY arrival_airport_code ORDER BY tickets_sold DESC;"
+    params = (airline, start, end)
+    executeQuery(viewCountAirportQuery, params)
     
     orderDestinationsQuery = "SELECT city, country, tickets_sold FROM airport_count NATURAL JOIN airport GROUP BY city, country ORDER BY tickets_sold DESC LIMIT 3"
-    cursor.execute(orderDestinationsQuery)
-    cityCountryTicketsSold = cursor.fetchall()
+    cityCountryTicketsSold = executeQuery(orderDestinationsQuery)
+    
     deleteViewQuery = "DROP view airport_count;"
-    cursor.execute(deleteViewQuery)
-    cursor.close()
+    executeQuery(deleteViewQuery)
     return {"data": cityCountryTicketsSold}
 
-def assertStaffPermission(username, airline, cursor): 
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
+def assertStaffPermission(username, airline): 
+    staff = checkUserExistsInDb("airline_staff", username)
     if staff["airline_name"] == airline:
         return staff 
     else:
