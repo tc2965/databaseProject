@@ -5,8 +5,9 @@ from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser
+from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser
 import dbmanager
+import dbmanager_customer
 
 #Initialize the app from Flask
 app = Flask(__name__)
@@ -53,7 +54,7 @@ def staffRegister():
 # 1. VIEW PUBLIC INFO A
 @app.route('/flight/search/', methods=['POST'])
 def searchFlights(): 
-    # if it's round trip, just use this endpoint again
+    # if it's round trip, just use this endpoint again with departure_date = arrival_date of the first trip
     source = request.form["source"] # airport code
     destination = request.form["destination"]
     departure = request.form["departure_date"]
@@ -108,6 +109,65 @@ def loginAuth():
 		#returns an error message to the html page
 		error = 'Invalid login or username'
 		return render_template('login.html', error=error)
+
+# CUSTOMER USE CASES
+# 1. VIEW MY FLIGHTS
+@app.route('/view_my_flights', methods=['GET'])
+def viewMyFlights():
+    if not session.get("username"):
+        return None # todo render page with error 
+    if request.method == 'GET':
+        return dbmanager_customer.viewMyFlights(session["username"])
+
+# 2. SEARCH FOR FLIGHTS
+# I don't think we really need to do two searchFlights functions?
+@app.route('/flight/search/', methods=['POST'])
+def searchFlights(): 
+    # if it's round trip, just use this endpoint again
+    source = request.form["source"] # airport code
+    destination = request.form["destination"]
+    departure = request.form["departure_date"]
+    return_date = request.form.get("return_date")
+    
+    return dbmanager_customer.searchFlights_customer(source, destination, departure, return_date)
+
+# 3. PURCHASE TICKETS
+@app.route('/purchase_tickets', methods=['POST'])
+def purchaseTickets():
+    purchase = purchase_parser.parse_args()
+    return dbmanager_customer.purchaseTicketsDict(purchase)
+
+# 4. CANCEL TRIP 
+@app.route('/cancel_trip/<ticket_id>', methods=['DELETE'])
+def cancelTrip(ticketID):
+    if not session.get("username"):
+            return None # todo render page with error 
+    if request.method == 'GET':
+        return dbmanager_customer.cancelTrip(session["username"], ticketID)
+
+# 5. GIVE RATINGS AND COMMENTS
+@app.route('/rate_and_comment', methods=['POST'])
+def rateAndComment():
+    if not session.get("username"):
+            return None # todo render page with error 
+    if request.method == 'GET':
+        ratings_comments = rate_comment_parser.parse_args()
+        return dbmanager_customer.giveRatingsAndComments(session["username"], ratings_comments)
+
+# 6. TRACK MY SPENDING
+@app.route('/track_my_spending/default', methods=['GET'])
+def trackMySpending():
+    if not session.get("username"):
+            return None # todo render page with error 
+    if request.method == 'GET':
+        return dbmanager_customer.trackSpending(session["username"])
+
+@app.route('/track_my_spending/<start>/<end>', methods=['GET'])
+def trackMySpending(start, end):
+    if not session.get("username"):
+            return None # todo render page with error 
+    if request.method == 'GET':
+        return dbmanager_customer.trackSpending(session["username"], start, end)
 
 # AIRLINE STAFF USE CASES
 # 1. VIEW FUTURE FLIGHTS BY RANGE OF DATES

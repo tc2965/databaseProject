@@ -140,6 +140,7 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
 def findFutureAirlineFlightsTime(start, end, username): 
+    # This handles the default 30 day view and queries for specific dates
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     today = datetime.today()
