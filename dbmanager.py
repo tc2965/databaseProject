@@ -1,7 +1,6 @@
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from utils.utils import CUSTOMER, STAFF
 import hashlib
 from datetime import datetime
 from dateutil.relativedelta import *
@@ -33,10 +32,7 @@ def executeQuery(query, params=None, fetchOne=False):
     try:
         conn = createConnection()
         cursor = conn.cursor()
-        if params:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
+        cursor.execute(query, params)
         if fetchOne:
             data = cursor.fetchone() 
         else: 
@@ -249,23 +245,43 @@ def viewRevenue(start, end, username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     
-    totalBasePriceQuery = "SELECT SUM(base_price) as price FROM (flight NATURAL JOIN ticket) WHERE airline_name = %s AND (departure_date_time BETWEEN %s AND %s)"
+    totalBasePriceQuery = "SELECT SUM(base_price) as totalbaseprice FROM (flight NATURAL JOIN ticket) WHERE airline_name = %s AND (departure_date_time BETWEEN %s AND %s)"
     params = (airline, start, end)
-    totalBasePrice = executeQuery(totalBasePriceQuery, params, True)["price"]
+    totalBasePrice = executeQuery(totalBasePriceQuery, params, True)["totalbaseprice"]
     
-    totalSoldPriceQuery = "SELECT SUM(sold_price) as price FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (date_time BETWEEN %s AND %s)"
-    totalSoldPrice = executeQuery(totalSoldPriceQuery, params, True)["price"]
-    return {"revenue" : totalSoldPrice - totalBasePrice}
+    totalSoldPriceQuery = "SELECT SUM(sold_price) as totalsoldprice FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (date_time BETWEEN %s AND %s)"
+    totalSoldPrice = executeQuery(totalSoldPriceQuery, params, True)["totalsoldprice"]
+    
+    revenue = totalSoldPrice - totalBasePrice
+    data = {"totalbaseprice": totalBasePrice,
+            "totalsoldprice": totalSoldPrice, 
+            "revenue": revenue, 
+            "airline": airline, 
+            "period_start": start,
+            "period_end": end}
+    return {"data": data}
 
 # 10. VIEW REVENUE TRAVEL CLASS  
-def viewRevenueTravelClass(travel_class, username):
+def viewRevenueTravelClass(username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
 
-    totalSoldPriceQuery = "SELECT travel_class, SUM(sold_price) as price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class" 
-    params = airline
-    totalSoldPrice = executeQuery(totalSoldPriceQuery, params)
-    return {"data":totalSoldPrice}
+    createBaseView = "CREATE VIEW base_travel AS SELECT travel_class, SUM(base_price) as base_cost FROM ticket INNER JOIN flight ON ticket.flight_number = flight.flight_number AND ticket.departure_date_time = flight.departure_date_time AND ticket.airline_name = %s GROUP BY travel_class;"
+    params = airline    
+    executeQuery(createBaseView, params)
+    
+    createSoldView = "CREATE VIEW sold_travel AS SELECT travel_class, SUM(sold_price) as sold_price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class;"
+    executeQuery(createSoldView, params)
+    
+    revenueQuery = "SELECT sold_travel.travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"
+    revenue = executeQuery(revenueQuery)
+    
+    dropBaseViews = "DROP VIEW base_travel;"
+    executeQuery(dropBaseViews)
+    dropSoldView = "DROP VIEW sold_travel;"
+    executeQuery(dropSoldView)
+
+    return {"data":revenue}
     
 # 11. VIEW TOP DESTINATIONS
 def viewTopDestinations(period, username):

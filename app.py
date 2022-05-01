@@ -237,12 +237,12 @@ def viewRevenue(start, end):
     
 # 10. VIEW EARNED REVENUE BY TRAVEL CLASS 
 # /viewRevenueTravelClass/Economy
-@app.route('/viewRevenueTravelClass/<travel_class>', methods=['GET'])
-def viewRevenueTravelClass(travel_class):
+@app.route('/viewRevenueTravelClass', methods=['GET'])
+def viewRevenueTravelClass():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET':
-        return dbmanager.viewRevenueTravelClass(travel_class, session["username"])
+        return dbmanager.viewRevenueTravelClass(session["username"])
 
 # 11. VIEW TOP DESTINATIONS
 # /viewTopDestinations/month 
