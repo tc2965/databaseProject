@@ -30,10 +30,28 @@
 	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
 	<input type="submit" value = Submit />
 </form>
+{% if flight_status%}
+	<p>{{airline}} Flight#{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
+{% endif%}
 
-<button id="btn">View Flights</button>
-<pre id="flights"></pre>
+<p>Search for flights within a period</p> 
+<form action="/view_flights/time" method="POST">
+	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
+	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="submit" value = Submit />
+</form>
 
+<p>Search for flights by airports</p> 
+<form action="/view_flights/airport" method="POST">
+	<select name="type">
+		<option value ="source">from</option>
+		<option value ="destination">to</option>
+	</select>
+	<input type="text" name = "airport" placeholder="JFK" required/>
+	<input type="submit" value = Submit />
+</form>
+
+<p>View {{airline}} Flights</p>
 <table>
 	<TR>
 		<TD>flight_number</TD>
@@ -61,25 +79,14 @@
 	{% endfor %}
 	</table>
 
+<a href="/changeFlightStatus"><button>Change Flight Status</button></a>
+<a href="/createAirplane"><button>Create Airplane</button></a>
+<a href="/createAirport"><button>Create Airport</button></a>
+<a href="/createFlight"><button>Create Flight</button></a>
+
+<br>
+<a href="/logout"><button>Logout</button></a>
 
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script>
-	const btn=document.getElementById("btn");
-
-	btn.addEventListener("click", function(){
-		axios.get('http://127.0.0.1:5000/view_flights/time/default')
-		.then(response => {
-			console.log(response.data.data)
-			var flights = response.data.data
-			document.getElementById("flights").innerHTML = JSON.stringify(flights, null, 4);
-		})
-	console.log("hi")
-	})
-</script>
-
-<a href="/logout">Logout</a>
-
 </body>
-
-
 </html>

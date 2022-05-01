@@ -132,10 +132,10 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
         query = "SELECT status FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
         params = (airline, flight_number, departure, arrival)
     else:
-        query = "SELECT status FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
         params = (airline, flight_number, departure)
     status = executeQuery(query, params, True)
-    return {"status": status}
+    return status
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS

@@ -67,7 +67,10 @@ def viewFlightStatus():
     arrival_date = request.form.get("arrival_date")
     departure_date = request.form["departure_date"]
     
-    return dbmanager.viewFlightStatus(airline, flight_number, departure_date, arrival_date)
+    status = dbmanager.viewFlightStatus(airline, flight_number, departure_date, arrival_date)
+    session["status"] = status
+    print(status)
+    return redirect(url_for('staffHome'))
 
 # 2. REGISTER
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
@@ -106,6 +109,7 @@ def loginAuth():
         if type_user == 'customer':
             return redirect(url_for('home'))
         else:
+            session["airline"] = exists["airline_name"]
             return redirect(url_for('staffHome'))
         
     else:
@@ -115,13 +119,17 @@ def loginAuth():
 
 # AIRLINE STAFF USE CASES
 # 1. VIEW FUTURE FLIGHTS BY RANGE OF DATES
-@app.route('/view_flights/time/<start>/<end>', methods=['GET'])
-def view_flights_time(start, end):
+@app.route('/view_flights/time', methods=['POST'])
+def view_flights_time():
     if not session.get("username"):
         return None # todo render page with error
-    if request.method == 'GET': 
-        return dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])
-    
+    if request.method == 'POST': 
+        start = request.form["start"]
+        end = request.form["end"]
+        flights = dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])["data"]
+        session["flights"] = flights
+        return redirect(url_for('staffHome'))
+
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
 @app.route('/view_flights/time/default', methods=['GET'])
 def view_flights_time_default():
@@ -131,12 +139,17 @@ def view_flights_time_default():
         return dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
-@app.route('/view_flights/<type>/<airport>', methods=['GET'])
-def view_flights_airports(type, airport):
+@app.route('/view_flights/airport', methods=['POST'])
+def view_flights_airports():
     if not session.get("username"):
         return None # todo render page with error
-    if request.method == 'GET': 
-        return dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])
+    if request.method == 'POST': 
+        type = request.form["type"]
+        airport = request.form["airport"]
+        flights = dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])["data"]
+        print(flights)
+        session["flights"] = flights
+        return redirect(url_for('staffHome'))
     
 # 1. SEE ALL CUSTOMERS OF PARTICULAR FLIGHT
 # 2. CREATE FLIGHTS
@@ -199,11 +212,11 @@ def airport():
 
 # 6. VIEW FLIGHT RATINGS 
 # /view_flight_ratings/ER400
-@app.route('/view_flight_ratings/<flight_number>', methods=['GET'])
+@app.route('/view_flight_ratings/<flight_number>', methods=['POST'])
 def viewFlightRatings(flight_number):
     if not session.get("username"):
         return None # todo render page with error
-    if request.method == 'GET':
+    if request.method == 'POST':
         return dbmanager.viewFlightRatings(flight_number, session["username"])
      
 # 7. VIEW MOST FREQUENT CUSTOMER 
@@ -266,8 +279,10 @@ def home():
 @app.route('/staffHome')
 def staffHome():
     username = session['username']
-    default_flights = view_flights_time_default()["data"]
-    return render_template('staffHome.html', username=username, flights=default_flights)
+    airline = session["airline"]
+    default_flights = session.get("flights")
+    status = session.get("status")
+    return render_template('staffHome.html', username=username, flights=default_flights, airline=airline, flight_status=status)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
