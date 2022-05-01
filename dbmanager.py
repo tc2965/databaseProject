@@ -212,7 +212,7 @@ def viewFlightRatings(flight_number, username):
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
     params = flight_number
     ratings = executeQuery(query, params)
-    return {"data": ratings}
+    return ratings
 
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):

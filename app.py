@@ -212,12 +212,15 @@ def airport():
 
 # 6. VIEW FLIGHT RATINGS 
 # /view_flight_ratings/ER400
-@app.route('/view_flight_ratings/<flight_number>', methods=['POST'])
-def viewFlightRatings(flight_number):
+@app.route('/view_flight_ratings/', methods=['POST'])
+def viewFlightRatings():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'POST':
-        return dbmanager.viewFlightRatings(flight_number, session["username"])
+        flight_number = request.form["flight_number"]
+        ratings = dbmanager.viewFlightRatings(flight_number, session["username"])
+        session["ratings"] = ratings 
+        return redirect(url_for('staffHome'))
      
 # 7. VIEW MOST FREQUENT CUSTOMER 
 @app.route('/view_most_frequent_customer', methods=['GET'])
@@ -282,7 +285,8 @@ def staffHome():
     airline = session["airline"]
     default_flights = session.get("flights")
     status = session.get("status")
-    return render_template('staffHome.html', username=username, flights=default_flights, airline=airline, flight_status=status)
+    ratings = session.get("ratings")
+    return render_template('staffHome.html', username=username, flights=default_flights, airline=airline, flight_status=status, ratings=ratings)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
