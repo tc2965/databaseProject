@@ -1,0 +1,88 @@
+<p>View reports and revenue for Airline {{airline}} </p>
+
+<p>Search for flight reports within a period</p> 
+<form action="/viewReport/date" method="POST">
+	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
+	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if report %}
+<table>
+    <TR>
+        <TD>flight_number</TD>
+        <TD>tickets_sold</TD>
+    </TR>
+    <TR>
+    {% for flight in report %}
+    <TD>{{flight.flight_number}}</TD>
+    <TD>{{flight.tickets_sold}}</TD>
+    </TR>
+    {% endfor %}
+    </table>
+{% endif %}
+
+<a href="/viewRevenueTravelClass"><button>Refresh Revenue by Travel Class</button></a>
+{% if travel_class_revenue %}
+<table>
+    <TR>
+        <TD>Travel class</TD>
+        <TD>Base Cost</TD>
+        <TD>Sold Price</TD>
+        <TD>Revenue</TD>
+    </TR>
+    {% for revenue in travel_class_revenue %}
+    <TR>
+        <TD>{{revenue.travel_class}}</TD>
+        <TD>{{revenue.base_cost}}</TD>
+        <TD>{{revenue.sold_price}}</TD>
+        <TD>{{revenue.revenue}}</TD>
+    </TR>
+    {% endfor %}
+</table>
+{% endif %}
+
+<p>View revenue within a period </p> 
+<form action="/viewRevenue/date" method="POST">
+	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
+	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if revenue%}
+<table>
+    <TR>
+        <TD>Airline</TD>
+        <TD>Period Start</TD>
+        <TD>Period End</TD>
+        <TD>Total Base Price</TD>
+        <TD>Total Sold Price</TD>
+        <TD>Revenue</TD>
+    </TR>
+    <TR>
+        <TD>{{revenue.airline}}</TD>
+        <TD>{{revenue.period_start}}</TD>
+        <TD>{{revenue.period_end}}</TD>
+        <TD>{{revenue.totalbaseprice}}</TD>
+        <TD>{{revenue.totalsoldprice}}</TD>
+        <TD>{{revenue.revenue}}</TD>
+    </TR>
+</table>
+{% endif%}
+
+<a href="/viewTopDestinations/month"><button>View Top Destinations (3 Months)</button></a>
+{% if monthDestination%}
+<table>
+    <TR>
+        <TD>City</TD>
+        <TD>Country</TD>
+        <TD>Tickets Sold</TD>
+    </TR>
+    {% for destination in monthDestination %}
+    <TR>
+        <TD>{{destination.city}}</TD>
+        <TD>{{destination.country}}</TD>
+        <TD>{{destination.tickets_sold}}</TD>
+    </TR>
+    {% endfor %}
+</table>
+{% endif%}
+<a href="/viewTopDestinations/year"><button>View Top Destinations (1 Year)</button></a>

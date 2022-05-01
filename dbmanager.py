@@ -238,7 +238,7 @@ def viewReportDate(start, end, username):
     query = "SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = %s AND date_time BETWEEN %s AND %s GROUP BY flight_number;" 
     params = (airline, start, end)
     numTicket = executeQuery(query, params)
-    return {"data": numTicket}
+    return numTicket
 
 # 9. VIEW REVENUE
 def viewRevenue(start, end, username):
@@ -260,7 +260,7 @@ def viewRevenue(start, end, username):
             "airline": airline, 
             "period_start": start,
             "period_end": end}
-    return {"data": data}
+    return data
 
 # 10. VIEW REVENUE TRAVEL CLASS  
 def viewRevenueTravelClass(username):
@@ -274,7 +274,7 @@ def viewRevenueTravelClass(username):
     createSoldView = "CREATE VIEW sold_travel AS SELECT travel_class, SUM(sold_price) as sold_price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class;"
     executeQuery(createSoldView, params)
     
-    revenueQuery = "SELECT sold_travel.travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"
+    revenueQuery = "SELECT sold_travel.travel_class as travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"
     revenue = executeQuery(revenueQuery)
     
     dropBaseViews = "DROP VIEW base_travel;"
@@ -282,7 +282,7 @@ def viewRevenueTravelClass(username):
     dropSoldView = "DROP VIEW sold_travel;"
     executeQuery(dropSoldView)
 
-    return {"data":revenue}
+    return revenue
     
 # 11. VIEW TOP DESTINATIONS
 def viewTopDestinations(period, username):
@@ -303,7 +303,7 @@ def viewTopDestinations(period, username):
     
     deleteViewQuery = "DROP view airport_count;"
     executeQuery(deleteViewQuery)
-    return {"data": cityCountryTicketsSold}
+    return cityCountryTicketsSold
 
 def assertStaffPermission(username, airline): 
     staff = checkUserExistsInDb("airline_staff", username)

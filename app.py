@@ -245,22 +245,41 @@ def viewCustomerFlights():
         return redirect(url_for('staffHome'))
 
 # 8. VIEW REPORT
+@app.route('/viewReports')
+def viewReports():
+    revenueTravelClass = session.get("viewRevenueTravelClass")
+    report = session.get("viewReportDate")
+    revenue = session.get("revenue")
+    travel_class_revenue = session.get("travel_class_revenue")
+    monthDestination = session.get("monthDestination")
+    return render_template("viewReports.html", airline=session["airline"], revenueTravelClass=revenueTravelClass, report=report, revenue=revenue, travel_class_revenue=travel_class_revenue, monthDestination=monthDestination)
+
 # /viewReport/2022-01-01/2023-01-01
-@app.route('/viewReport/<start>/<end>', methods=['GET'])
-def viewReportDate(start, end): 
+@app.route('/viewReport/date', methods=['POST'])
+def viewReportDate(): 
     if not session.get("username"):
         return None # todo render page with error
-    if request.method == 'GET':
-        return dbmanager.viewReportDate(start, end, session["username"])
+    if request.method == 'POST':
+        start = request.form["start"]
+        end = request.form["end"]
+        report = dbmanager.viewReportDate(start, end, session["username"])
+        session["viewReportDate"] = report 
+        print(report)
+        return redirect(url_for('viewReports'))
 
 # 9. VIEW EARNED REVENUE
 # /viewRevenue/2022-01-01/2023-01-01
-@app.route('/viewRevenue/<start>/<end>', methods=['GET'])
-def viewRevenue(start, end): 
+@app.route('/viewRevenue/date', methods=['POST'])
+def viewRevenue(): 
     if not session.get("username"):
         return None # todo render page with error
-    if request.method == 'GET':
-        return dbmanager.viewRevenue(start, end, session["username"])
+    if request.method == 'POST':
+        start = request.form["start"]
+        end = request.form["end"]
+        revenue = dbmanager.viewRevenue(start, end, session["username"])
+        session["revenue"] = revenue
+        print(revenue)
+        return redirect(url_for("viewReports"))
     
 # 10. VIEW EARNED REVENUE BY TRAVEL CLASS 
 # /viewRevenueTravelClass/Economy
@@ -269,7 +288,10 @@ def viewRevenueTravelClass():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET':
-        return dbmanager.viewRevenueTravelClass(session["username"])
+        travel_class_revenue = dbmanager.viewRevenueTravelClass(session["username"])
+        session["travel_class_revenue"] = travel_class_revenue
+        print(travel_class_revenue)
+        return redirect(url_for("viewReports"))
 
 # 11. VIEW TOP DESTINATIONS
 # /viewTopDestinations/month 
@@ -279,7 +301,11 @@ def viewTopDestinations(period):
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET':
-        return dbmanager.viewTopDestinations(period, session["username"])
+        destinations = dbmanager.viewTopDestinations(period, session["username"])
+        session[period+"Destinations"] = destinations
+        print(destinations)
+        print(session[period+"Destinations"])
+        return redirect(url_for("viewReports"))
 
 @app.route('/home')
 def home():
