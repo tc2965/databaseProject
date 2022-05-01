@@ -220,6 +220,7 @@ def viewFlightRatings():
         flight_number = request.form["flight_number"]
         ratings = dbmanager.viewFlightRatings(flight_number, session["username"])
         session["ratings"] = ratings 
+        print(ratings)
         return redirect(url_for('staffHome'))
      
 # 7. VIEW MOST FREQUENT CUSTOMER 
@@ -228,14 +229,20 @@ def viewMostFrequentCustomer():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET':
-        return dbmanager.viewMostFrequentCustomer(session["username"])
+        mostFrequentFlyer= dbmanager.viewMostFrequentCustomer(session["username"])
+        session["mostFrequentFlyer"] = mostFrequentFlyer
+        return redirect(url_for('staffHome'))
 
-@app.route('/view_customer_flights/<customer_email>', methods=['GET'])
-def viewCustomerFlights(customer_email):
+@app.route('/view_customer_flights', methods=['POST'])
+def viewCustomerFlights():
     if not session.get("username"):
         return None 
-    if request.method == 'GET':
-        return dbmanager.viewCustomerFlights(customer_email, session["username"])
+    if request.method == 'POST':
+        customer_email = request.form["customer_email"]
+        customer_flights = dbmanager.viewCustomerFlights(customer_email, session["username"])
+        session["customer_flights"] = customer_flights 
+        print(customer_flights)
+        return redirect(url_for('staffHome'))
 
 # 8. VIEW REPORT
 # /viewReport/2022-01-01/2023-01-01
@@ -286,7 +293,9 @@ def staffHome():
     default_flights = session.get("flights")
     status = session.get("status")
     ratings = session.get("ratings")
-    return render_template('staffHome.html', username=username, flights=default_flights, airline=airline, flight_status=status, ratings=ratings)
+    mostFrequentFlyer = session.get("mostFrequentFlyer")
+    customer_flights = session.get("customer_flights")
+    return render_template('staffHome.html', username=username, flights=default_flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
@@ -301,8 +310,9 @@ def post():
 
 @app.route('/logout')
 def logout():
-	session.pop('username')
-	return redirect('/')
+    # session.pop('username')
+    session.clear()
+    return redirect('/')
 
 		
 app.secret_key = 'some key that you will never guess'

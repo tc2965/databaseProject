@@ -14,6 +14,34 @@
 	}
 </style>
 
+<a href="/view_most_frequent_customer"><button>Refresh Most Frequent Flyer</button></a>
+{% if mostFrequentFlyer %}
+<p>Curent Most Frequent Flyer is {{mostFrequentFlyer.customer_email}} with {{mostFrequentFlyer.trips}} trips</p>
+{% endif %}
+
+<p>Lookup a customer's flight</p>
+<form action="/view_customer_flights" method="POST">
+	<input type="text" name = "customer_email" placeholder="customer_email" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if customer_flights%}
+<table>
+<TR>
+	<TD>airline_name</TD>
+	<TD>flight_number</TD>
+	<TD>departure_date_time</TD>
+</TR>
+<TR>
+{% for flight in customer_flights %}
+<TD>{{flight.airline_name}}</TD>
+<TD>{{flight.flight_number}}</TD>
+<TD>{{flight.departure_date_time}}</TD>
+</TR>
+{% endfor %}
+</table>
+{% endif%}
+
+
 <p>Search for flights</p>
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
@@ -80,6 +108,7 @@
 	<input type="submit" value = Submit />
 </form>
 
+{% if flights%}
 <p>View {{airline}} Flights</p>
 <table>
 	<TR>
@@ -107,6 +136,8 @@
 	</TR>
 	{% endfor %}
 </table>
+{% endif%}
+
 
 <a href="/changeFlightStatus"><button>Change Flight Status</button></a>
 <a href="/createAirplane"><button>Create Airplane</button></a>
