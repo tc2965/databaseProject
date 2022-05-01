@@ -14,11 +14,68 @@
 	}
 </style>
 
-<table>
-	<th>Time</th>
-	<th>Post</th>
+<p>Search for flights</p>
+<form action="/flight/search/" method="POST">
+	<input type="text" name = "source" placeholder="source" required/>
+	<input type="text" name = "destination" placeholder="destination" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="submit" value = Submit />
+</form>
 
-</table>
+<p>Search for a flight's status</p> 
+<form action="/flight_status/view/" method="POST">
+	<input type="text" name = "airline" placeholder="airline" required/>
+	<input type="text" name = "flight_number" placeholder="flight_number" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
+	<input type="submit" value = Submit />
+</form>
+
+<button id="btn">View Flights</button>
+<pre id="flights"></pre>
+
+<table>
+	<TR>
+		<TD>flight_number</TD>
+		<TD>departure_date_time</TD>
+		<TD>airline_name</TD>
+		<TD>airplane_id</TD>
+		<TD>departure_airport_code</TD>
+		<TD>arrival_date_time</TD>
+		<TD>arrival_airport_code</TD>
+		<TD>base_price</TD>
+		<TD>status</TD>
+	</TR>
+	<TR>
+	{% for flight in flights %}
+	   <TD>{{flight.flight_number}}</TD>
+	   <TD>{{flight.departure_date_time}}</TD>
+	   <TD>{{flight.airline_name}}</TD>
+	   <TD>{{flight.airplane_id}}</TD>
+	   <TD>{{flight.departure_airport_code}}</TD>
+	   <TD>{{flight.arrival_date_time}}</TD>
+	   <TD>{{flight.arrival_airport_code}}</TD>
+	   <TD>{{flight.base_price}}</TD>
+	   <TD>{{flight.status}}</TD>
+	</TR>
+	{% endfor %}
+	</table>
+
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+	const btn=document.getElementById("btn");
+
+	btn.addEventListener("click", function(){
+		axios.get('http://127.0.0.1:5000/view_flights/time/default')
+		.then(response => {
+			console.log(response.data.data)
+			var flights = response.data.data
+			document.getElementById("flights").innerHTML = JSON.stringify(flights, null, 4);
+		})
+	console.log("hi")
+	})
+</script>
 
 <a href="/logout">Logout</a>
 

@@ -93,21 +93,25 @@ def registerAuth(type_user):
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
 	#grabs information from the forms
-	username = request.form['username']
-	password = request.form['password']
-	type_user = request.form['type']
+    username = request.form['username']
+    password = request.form['password']
+    type_user = request.form['type']
 
-	exists = dbmanager.checkUserLogin(type_user, username, password)
-	error = None
-	if(exists):
+    exists = dbmanager.checkUserLogin(type_user, username, password)
+    error = None
+    if(exists):
 		#creates a session for the the user
 		#session is a built in
-		session['username'] = username
-		return redirect(url_for('home'))
-	else:
-		#returns an error message to the html page
-		error = 'Invalid login or username'
-		return render_template('login.html', error=error)
+        session['username'] = username
+        if type_user == 'customer':
+            return redirect(url_for('home'))
+        else:
+            return redirect(url_for('staffHome'))
+        
+    else:
+		#returns an error message to the html page 
+        error = 'Invalid login or username'
+        return render_template('login.html', error=error)
 
 # AIRLINE STAFF USE CASES
 # 1. VIEW FUTURE FLIGHTS BY RANGE OF DATES
@@ -259,6 +263,11 @@ def home():
     username = session['username']
     return render_template('home.html', username=username)
 
+@app.route('/staffHome')
+def staffHome():
+    username = session['username']
+    default_flights = view_flights_time_default()["data"]
+    return render_template('staffHome.html', username=username, flights=default_flights)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
@@ -275,6 +284,7 @@ def post():
 def logout():
 	session.pop('username')
 	return redirect('/')
+
 		
 app.secret_key = 'some key that you will never guess'
 #Run the app on localhost port 5000
