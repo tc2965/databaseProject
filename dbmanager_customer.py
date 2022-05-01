@@ -1,7 +1,6 @@
 import pymysql.cursors
 import os
 from dotenv import load_dotenv
-from models import CUSTOMER, STAFF
 import hashlib
 from datetime import date, datetime, timedelta # modified here
 
