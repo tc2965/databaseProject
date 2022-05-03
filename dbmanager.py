@@ -116,7 +116,7 @@ def registerStaff(staff):
         # now insert phone
         insertStaffPhone = "INSERT INTO airline_staff_phones VALUES (%(username)s, %(phone_number)s)"
         executeCommitQuery(insertStaffPhone, staff)
-        return staff["username"]
+        return (staff["username"], staff["airline"])
 
 # 1. VIEW PUBLIC INFO A 
 # for round trips, just use this endpoint again and make departure = arrival of the first result

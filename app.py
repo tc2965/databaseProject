@@ -29,7 +29,7 @@ conn = pymysql.connect(host=host,
 #Define a route to hello function
 @app.route('/')
 def hello():
-	return render_template('index.html')
+	return render_template('home.html')
 
 #Define route for login
 @app.route('/login')
@@ -62,16 +62,15 @@ def searchFlights():
     
     username = session.get("username")
     airline = session.get("airline")
+    session["flights"] = flights
     if username and airline:
         # it's a staff
-        session["flights"] = flights
         return redirect(url_for("staffHome"))
     elif username:
         # it's a customer 
         return redirect(url_for("customerHome"))
     else:
         # it's public 
-        session["flights"] = flights
         return redirect(url_for("home"))
 
 @app.route('/flight/search/return', methods=['POST'])
@@ -83,16 +82,16 @@ def searchReturnFlights():
     returnFlights = dbmanager.searchFlights(source, destination, departure)
     username = session.get("username")
     airline = session.get("airline")
+
+    session["returnFlights"] = returnFlights
     if username and airline:
         # it's a staff
-        session["returnFlights"] = returnFlights
         return redirect(url_for("staffHome"))
     elif username:
         # it's a customer 
         return redirect(url_for("customerHome"))
     else:
         # it's public 
-        session["returnFlights"] = returnFlights
         return redirect(url_for("home"))
 
 @app.route('/flight_status/view/', methods=['POST'])
@@ -101,11 +100,20 @@ def viewFlightStatus():
     flight_number = request.form["flight_number"]
     arrival_date = request.form.get("arrival_date")
     departure_date = request.form["departure_date"]
-    
     status = dbmanager.viewFlightStatus(airline, flight_number, departure_date, arrival_date)
+    
+    username = session.get("username")
+    airline = session.get("airline")
     session["status"] = status
-    print(status)
-    return redirect(url_for('staffHome'))
+    if username and airline:
+        # it's a staff
+        return redirect(url_for("staffHome"))
+    elif username:
+        # it's a customer 
+        return redirect(url_for("customerHome"))
+    else:
+        # it's public 
+        return redirect(url_for("home"))
 
 # 2. REGISTER
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
@@ -124,9 +132,13 @@ def registerAuth(type_user):
             template = "staffRegister.html"
         return render_template(template, error="email or username exists already")
     else:
-        session['username'] = inDB
         if type_user == "airline_staff":
+            session['username'] = inDB[0]
+            session['airline'] = inDB[1]
             path = 'staffHome'
+        else:
+            session['username'] = inDB
+            path = 'customerHome'
         return redirect(url_for(path))
 
 # 3. LOGIN
@@ -349,7 +361,8 @@ def home():
     username = session.get('username')
     flights = session.get("flights")
     returnFlights = session.get("returnFlights")
-    return render_template('home.html', username=username, flights=flights, returnFlights=returnFlights)
+    flight_status = session.get("status")
+    return render_template('home.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status)
 
 @app.route('/staffHome')
 def staffHome():
@@ -362,6 +375,14 @@ def staffHome():
     customer_flights = session.get("customer_flights")
     returnFlights = session.get("returnFlights")
     return render_template('staffHome.html', username=username, flights=flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights, returnFlights=returnFlights)
+
+@app.route('/customerHome')
+def customerHome():
+    username = session.get('username')
+    flights = session.get("flights")
+    returnFlights = session.get("returnFlights")
+    flight_status = session.get("status")
+    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
