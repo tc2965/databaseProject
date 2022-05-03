@@ -107,7 +107,7 @@ def viewMyFlights(email):
     if (exists):
         today = date.today()
         today = today.strftime("%Y-%m-%d")
-        cursor.execute("SELECT flight_number, departure_date_time, airline_name FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND customer_email = %s;", email)
+        cursor.execute("SELECT purchases.ticket_id as ticket_id, flight_number, departure_date_time, airline_name FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND customer_email = %s;", email)
         conn.commit()
         flights = cursor.fetchall()
         cursor.close()
@@ -115,6 +115,20 @@ def viewMyFlights(email):
     else:
         cursor.close()
         return False
+
+def viewMyUpcomingFlights(email):
+    conn = createConnection()
+    cursor = conn.cursor()
+    exists = checkUserExistsInDb("customer", "email", email, cursor)
+    cursor.close()
+    if not exists:
+        return False
+    today = datetime.today().strftime("%Y-%m-%d")
+    query = "SELECT purchases.ticket_id as ticket_id, flight_number, departure_date_time, airline_name FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND customer_email = %s AND departure_date_time > %s;"
+    params = (email, today)
+    flights = executeQuery(query, params)
+    print(f"{flights=}")
+    return flights
 
 # 2. Search for flights
 def searchFlights_customer(source, destination, departure_date, return_date=None):
@@ -246,9 +260,9 @@ def cancelTrip(email, ticket_id):
         cursor.execute("SELECT * FROM purchases WHERE customer_email = %s AND ticket_id = %s", (email, ticket_id))
         tickets = cursor.fetchall()
         if len(tickets) == 0:
-            print("No such ticket to be cancelled.")
+            message ="No such ticket to be cancelled."
             cursor.close()
-            return False
+            return message
         else:
             cursor.execute("SELECT departure_date_time FROM ticket WHERE ID = %s", (ticket_id))
             departure_date_time = cursor.fetchall()[0]["departure_date_time"]
@@ -257,13 +271,14 @@ def cancelTrip(email, ticket_id):
                 cursor.execute("DELETE FROM purchases WHERE customer_email = %s AND ticket_id = %s", (email, ticket_id))
                 conn.commit()
                 cursor.close()
+                return f"Success cancelling flight for ticket {ticket_id}"
             else:
-                print("Cancellation of a flight ticket taking place within 24 hours is not allowed.")
+                message = "Cancellation of a flight ticket taking place within 24 hours is not allowed."
                 cursor.close()
-                return False
+                return message
     else:
         cursor.close()
-        return False
+        return "Error handling flight cancellation. Please try again later."
 
 # 5. Give Ratings and Comment on previous flights
 def giveRatingsAndComments(email, rating_comment):
@@ -271,10 +286,10 @@ def giveRatingsAndComments(email, rating_comment):
     comment = rating_comment["comment"]
     ticket_id = rating_comment["ticket_id"]
     
-    giveRatings(email, ticket_id, rating)
-    giveComments(email, ticket_id, comment)
+    return giveRatings(email, ticket_id, rating, comment)
+    # giveComments(email, ticket_id, comment)
 
-def giveRatings(email, ticket_id, rating):
+def giveRatings(email, ticket_id, rating, comment):
     conn = createConnection()
     cursor = conn.cursor()
 
@@ -294,20 +309,21 @@ def giveRatings(email, ticket_id, rating):
             departure_date_time = tickets[0]["departure_date_time"]
             now = datetime.now()
             if departure_date_time > now:
-                print("You haven't taken the flight.")
+                error = "You haven't taken the flight."
                 cursor.close()
-                return False
+                return {"error": error}
             else:
                 cursor.execute("SELECT * FROM ratings WHERE customer_email = %s AND ticket_id = %s", (email, ticket_id))
                 ratings = cursor.fetchall()
                 if len(ratings) != 0:
-                    print("You already rated the flight.")
+                    error = "You already rated the flight."
                     cursor.close()
-                    return False
+                    return {"error": error}
                 else:
-                    cursor.execute("INSERT INTO ratings VALUES (%s, %s, %s)", (email, ticket_id, rating))
+                    cursor.execute("INSERT INTO ratings VALUES (%s, %s, %s, %s)", (email, ticket_id, rating, comment))
                     conn.commit()
                     cursor.close()
+                    return {"success": f"Success rating flight with ticket {ticket_id}"}
     else:
         cursor.close()
         return False

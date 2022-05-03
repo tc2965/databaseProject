@@ -1,0 +1,87 @@
+<html>
+<head>
+</head>
+<body>
+<h1>Welcome {{username}}</h1>
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+	.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+	tr.pick_flight:hover { background-color : #FDF0D5; }
+	.selected {
+		background-color: #89ae37;
+		color: #FFF;
+	}
+</style>
+{% if error %}
+<p>{{error}}</p>
+{% endif %}
+{% if myFlights %}
+<p> Your flight History: </p>
+<table id ="table">
+    <TR>
+        <TD>Ticket ID</TD>
+        <TD>airline_name</TD>
+        <TD>departure_date_time</TD>
+        <TD>flight_number</TD>
+    </TR>
+    {% for flight in myFlights %}
+    <TR class="pick_flight">
+        <TD>{{flight.ticket_id}}</TD>
+        <TD>{{flight.airline_name}}</TD>
+        <TD>{{flight.departure_date_time}}</TD>
+        <TD>{{flight.flight_number}}</TD>
+    </TR>
+    {% endfor %}
+</table>
+<button onclick="commentFlight()">Rate Trip</button>
+{% endif %}
+
+<h2>Rate and Comment on a Flight</h2>
+<form action="/rate_and_comment" method="POST">
+	<input type="text" id = "rate_ticket_id" name = "ticket_id" placeholder="ticket_id" required/>
+	<input type="number" name = "rating" value="5" min="!" max="5" required/>
+	<input type="text" name = "comment" placeholder="comment" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if rateTrip %}
+<p>{{rateTrip}}</p>
+{% endif %}
+
+<h3 id="cancel_flight">Cancel a Flight</h3>
+{% if cancelTrip %}
+<p>{{cancelTrip}}</p>
+{% endif %}
+<p>Please note, cancellations are irreversible. If you understand, enter the ticket of the flight you wish to cancel</p>
+<form id="cancel_flight" action="/cancel_trip" method="POST">
+	<input id="cancel_flight_ticket" type="text" name = "ticketID" placeholder="ticketID" required/>
+	<input type="submit" value = Submit />
+</form>
+
+</body>
+<script>
+	var table = document.getElementById('table');
+	var table_return = document.getElementById('table_return')
+	var selected = table.getElementsByClassName('selected');
+	table.onclick = highlight;
+	table_return.onclick = highlight;
+
+	function highlight(e) {
+		if (selected[0]) selected[0].className = '';
+		e.target.parentNode.className = 'selected';
+	}
+    function commentFlight() {
+        console.log("commentFlight"); 
+        var element = document.querySelectorAll('.selected');
+		console.log(element)
+		if(element[0]!== undefined){ //it must be selected
+            var ticket_id = element[0].children[0].firstChild.data
+            console.log(ticket_id)
+            document.getElementById("rate_ticket_id").value = ticket_id
+            return ticket_id
+		}
+		console.log(element)
+    }
+</script>
+</html>

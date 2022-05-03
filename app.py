@@ -181,8 +181,14 @@ def viewMyFlights():
     if request.method == 'GET':
         myFlights = dbmanager_customer.viewMyFlights(session["username"])
         return myFlights
-        session["myFlights"] = myFlights 
-        return redirect(url_for("customerHome"))
+    
+@app.route('/view_my_upcoming_flights', methods=['GET'])
+def viewMyUpcomingFlights():
+    if not session.get("username"):
+        return None # todo render page with error 
+    if request.method == 'GET':
+        myFlights = dbmanager_customer.viewMyUpcomingFlights(session["username"])
+        return myFlights
 
 # # 2. SEARCH FOR FLIGHTS
 # # I don't think we really need to do two searchFlights functions?
@@ -220,22 +226,39 @@ def purchaseTickets():
         session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
     return redirect(url_for("customerHome"))
 
+@app.route('/manageFlights')
+def manageFlights():
+    myFlights = viewMyFlights()
+    cancelTrip = session.get("cancelTrip")
+    rateTrip = session.get("rateTrip")
+    error = session.get("error")
+    return render_template('manageFlights.html', myFlights=myFlights, cancelTrip=cancelTrip, rateTrip=rateTrip, error=error)
+
 # 4. CANCEL TRIP 
-@app.route('/cancel_trip/<ticket_id>', methods=['DELETE'])
-def cancelTrip(ticketID):
+@app.route('/cancel_trip', methods=['POST'])
+def cancelTrip():
     if not session.get("username"):
-            return None # todo render page with error 
-    if request.method == 'GET':
-        return dbmanager_customer.cancelTrip(session["username"], ticketID)
+        return None # todo render page with error 
+    if request.method == 'POST':
+        ticketID = request.form["ticketID"]
+        cancelTrip = dbmanager_customer.cancelTrip(session["username"], ticketID)
+        session["cancelTrip"] = cancelTrip
+        return redirect(url_for("manageFlights"))
 
 # 5. GIVE RATINGS AND COMMENTS
 @app.route('/rate_and_comment', methods=['POST'])
 def rateAndComment():
     if not session.get("username"):
             return None # todo render page with error 
-    if request.method == 'GET':
+    if request.method == 'POST':
         ratings_comments = rate_comment_parser.parse_args()
-        return dbmanager_customer.giveRatingsAndComments(session["username"], ratings_comments)
+        response = dbmanager_customer.giveRatingsAndComments(session["username"], ratings_comments)
+        print(f"{response=}")
+        if response.get("success"):
+            session["rateTrip"] = response["success"]
+        else: 
+            session["error"] = response.get("error", "Trouble rating flight, try again later.")
+        return redirect(url_for("manageFlights"))
 
 # 6. TRACK MY SPENDING
 @app.route('/track_my_spending/default', methods=['GET'])
@@ -492,7 +515,7 @@ def customerHome():
     flight_status = session.get("status")
     purchaseStatus = session.get("purchaseStatus")
     error = session.get("error")
-    myFlights = viewMyFlights()
+    myFlights = viewMyUpcomingFlights()
     return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights)
 		
 @app.route('/post', methods=['GET', 'POST'])
