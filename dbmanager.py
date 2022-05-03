@@ -43,8 +43,9 @@ def executeQuery(query, params=None, fetchOne=False):
         print(e)
         print(query)
         print(params)
+        return False
     
-def executeCommitQuery(query, params): 
+def executeCommitQuery(query, params=None): 
     print(query)
     print(params)
     try: 
@@ -53,10 +54,12 @@ def executeCommitQuery(query, params):
         cursor.execute(query, params)
         conn.commit()
         cursor.close()
+        return True
     except Exception as e:
         print(e)
         print(query)
         print(params)
+        return False
     
 
 def checkUserExistsInDb(typeUser, username):
@@ -172,9 +175,51 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
 def createFlight(flight): 
     query = "INSERT INTO flight VALUES (%(flight_number)s, %(airplane_id)s, %(departure_date_time)s, %(departure_airport_code)s, %(arrival_date_time)s, %(arrival_airport_code)s, %(base_price)s, %(status)s, %(airline_name)s)"
     params = flight
-    executeCommitQuery(query, params)
+    success = executeCommitQuery(query, params)
     number = flight["flight_number"]
-    return f"Creating flight {number} successful"
+    return f"Creating flight {number} successful" if success else success
+
+def createTickets(ticketsToCreate): 
+    print(ticketsToCreate)
+    economy_seats = ticketsToCreate["economy_seats"]
+    business_seats = ticketsToCreate["business_seats"]
+    first_seats = ticketsToCreate["first_seats"]
+    flight_number = ticketsToCreate["flight_number"]
+    airline_name = ticketsToCreate["airline_name"]
+    departure = ticketsToCreate["departure_date_time"]
+    depart = departure.replace(" ", "").replace("-", "").replace(":", "")
+    airline = airline_name.upper()
+    flight = flight_number.upper()
+    print("dep ", depart)
+    # ticket is len 20
+    
+    economy_ticket = "E" + flight[:3] + airline[:3] + depart[4:13] + ":"
+    business_ticket = "B" + flight[:3] + airline[:3] + depart[4:13] + ":"
+    first_ticket = "F" + flight[:3] + airline[:3] + depart[4:13] + ":"
+    
+    full_query = "INSERT INTO ticket VALUES "
+    for i in range(economy_seats):
+        curr_ticket = str(i).zfill(3)
+        ticket = economy_ticket + curr_ticket
+        query = f"('{ticket}', 'Economy', '{airline_name}', '{flight_number}', '{departure}')"
+        full_query += query + ", "
+
+    for i in range(business_seats):
+        curr_ticket = str(i).zfill(3)
+        ticket = business_ticket + curr_ticket
+        query = f"('{ticket}', 'Business', '{airline_name}', '{flight_number}', '{departure}')"
+        full_query += query + ", "
+        
+    for i in range(first_seats):
+        curr_ticket = str(i).zfill(3)
+        ticket = first_ticket + curr_ticket
+        query = f"('{ticket}', 'First', '{airline_name}', '{flight_number}', '{departure}')"
+        if i == first_seats - 1:
+            full_query += query
+        else:
+            full_query += query + ", "
+    success = executeCommitQuery(full_query)
+    return success
 
 # 3. CHANGE FLIGHT STATUS
 def changeFlightStatus(status, flight_number, departure_date_time, username): 

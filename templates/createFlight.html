@@ -15,3 +15,23 @@
         <p class="error"><strong>Error:</strong> {{error}}</p>
     {% endif %}
 </form>
+{% if createdFlight %}
+<p>{{createdFlight}}</p>
+{% endif %}
+
+<p>Create tickets for purchasing</p>
+<form action="/create_tickets" method="POST">
+    <input type="text" name = "economy_seats" placeholder="economy_seats" required/></br>
+    <input type="text" name = "business_seats" placeholder="business_seats" required/></br>
+    <input type="text" name = "first_seats" placeholder="first_seats" required/></br>
+    <input type="text" name = "airline_name" placeholder="airline_name" required/></br>
+    <input type="text" name = "flight_number" placeholder="flight_number" required/></br>
+    <input type="text" name = "departure_date_time" placeholder="departure_date_time" required/></br>
+    <input type="submit" value = Submit />
+    {% if error %}
+        <p class="error"><strong>Error:</strong> {{error}}</p>
+    {% endif %}
+</form>
+{% if createdTickets %}
+<p>{{createdTickets}}</p>
+{% endif %}

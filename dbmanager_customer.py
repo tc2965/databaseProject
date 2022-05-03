@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import hashlib
 from datetime import date, datetime, timedelta # modified here
+from dbmanager import executeQuery, executeCommitQuery
 
 load_dotenv()
 host = os.environ.get("HOST")
@@ -146,6 +147,7 @@ def searchFlights_customer(source, destination, departure_date, return_date=None
 
 # 3. Purchase tickets (for the front end, may implement together with the "searchFlights")
 def purchaseTicketsDict(purchase):
+    print(purchase)
     email = purchase["customer_email"]
     airline_name = purchase["airline_name"]
     flight_number = purchase["flight_number"]
@@ -159,11 +161,15 @@ def purchaseTicketsDict(purchase):
     return_flight_number = purchase.get("return_flight_number")
     return_airline_name = purchase.get("return_airline_name")
     return_departure_date_time = purchase.get("return_departure_date_time")
+    print(return_flight_number, return_airline_name, return_departure_date_time)  
+
+    to_trip = purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
     
     if return_flight_number and return_airline_name and return_departure_date_time: 
         return_trip = purchaseTickets(email, return_airline_name, return_flight_number, return_departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
-    
-    return purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
+        return [to_trip, return_trip]
+    else: 
+        return[to_trip]
 
 def purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_calss, card_type, card_number, name_on_card, card_exp): # various inputs through a form
     # I suppose here to be sure that two tickets are for the same flights, they must have the same airline_name, flight_number and departure_date_time (including hour-mintue-second), because one possible case is that the same flight go round trip for multiple times within a single day
@@ -172,8 +178,9 @@ def purchaseTickets(email, airline_name, flight_number, departure_date_time, tra
     exists = checkUserExistsInDb("customer", "email", email, cursor)
     if (exists):
         # decide whether the flight is on high-demand
-        cursor.execute("SELECT * FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s", (airline_name, flight_number, departure_date_time))
-        flight = cursor.fetchall()[0]
+        query = ("SELECT * FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s")
+        params = (airline_name, flight_number, departure_date_time)
+        flight = executeQuery(query, params, True)
         airplane_id = flight["airplane_id"]
         cursor.execute("SELECT number_of_seats FROM airplane WHERE ID = %s", (airplane_id))
         capacity = cursor.fetchall()[0]["number_of_seats"] # flight airplane capacity
@@ -217,6 +224,7 @@ def purchaseTickets(email, airline_name, flight_number, departure_date_time, tra
         cursor.execute("INSERT INTO purchases VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (ticket_id, sold_price, purchase_time, email, card_type, card_number, name_on_card, card_exp))
         conn.commit()
         cursor.close()
+        return ticket_id
     else:
         cursor.close()
         return False

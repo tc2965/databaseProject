@@ -5,7 +5,7 @@ from flask_restx import reqparse
 import pymysql.cursors
 import os 
 from dotenv import load_dotenv
-from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser
+from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser, create_tickets_parser
 import dbmanager
 import dbmanager_customer
 
@@ -31,6 +31,10 @@ conn = pymysql.connect(host=host,
 @app.route('/')
 def hello():
 	return render_template('home.html')
+
+@app.route('/index')
+def index():
+	return render_template('index.html')
 
 #Define route for login
 @app.route('/login')
@@ -192,7 +196,13 @@ def viewMyFlights():
 def purchaseTickets():
     purchase = purchase_parser.parse_args()
     purchase["customer_email"] = session.get("username")
-    return dbmanager_customer.purchaseTicketsDict(purchase)
+    success = dbmanager_customer.purchaseTicketsDict(purchase)
+    if success: 
+        purchaseStatus = f"Purchasing successful! Ticket ID is {success}"
+    else:
+        purchaseStatus = "Purchasing error, please try again later"
+    session["purchaseStatus"] = purchaseStatus
+    return redirect(url_for("customerHome"))
 
 # 4. CANCEL TRIP 
 @app.route('/cancel_trip/<ticket_id>', methods=['DELETE'])
@@ -264,15 +274,37 @@ def view_flights_airports():
 # 2. CREATE FLIGHTS
 @app.route('/createFlight')
 def createFlight(message=None, error=None): 
-    return render_template('createFlight.html', message=message, error=error)
+    createdFlight = session.get("createdFlight")
+    createdTickets = session.get("createdTickets")
+    return render_template('createFlight.html', message=message, error=error, createdFlight=createdFlight, createdTickets=createdTickets)
 
-@app.route('/flights', methods=['GET', 'POST'])
+@app.route('/flights', methods=['POST'])
 def flights():
     if not session.get("username"):
         return createFlight("Login first")
     if request.method == 'POST':
         flight = flight_parser.parse_args()
-        return dbmanager.createFlight(flight)
+        success = dbmanager.createFlight(flight)
+        session["createdFlight"] = success
+        return redirect(url_for("createFlight"))
+
+@app.route('/create_tickets', methods=['POST'])
+def createTickets():
+    if not session.get("username"):
+        return createFlight(error="Login first")
+    if request.method == 'POST':
+        print(request.form)
+        ticketsToCreate = create_tickets_parser.parse_args()
+        success = dbmanager.createTickets(ticketsToCreate)
+        if success:
+            createdTickets = "Success creating tickets for purchase"
+            session["createdTickets"] = createdTickets
+            error = None
+        else:
+            error = "Failed to create tickets, please try again later"
+            return createFlight(error=error)
+        return redirect(url_for("createFlight"))
+        
 
 # 3. CHANGE FLIGHT STATUS
 @app.route("/changeFlightStatus")
@@ -442,7 +474,8 @@ def customerHome():
     flights = session.get("flights")
     returnFlights = session.get("returnFlights")
     flight_status = session.get("status")
-    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status)
+    purchaseStatus = session.get("purchaseStatus")
+    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():

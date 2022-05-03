@@ -100,7 +100,7 @@
 	<!--one way info-->
 	<label>Source Flight</label>
 	<input id="purchase_form_flight_number" type="text" name = "flight_number" placeholder="flight_number" required/>
-	<input id="purchase_form_departure_date" type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input id="purchase_form_departure_date" type="text" name = "departure_date_time" placeholder="departure_date" required/>
 	<input id="purchase_form_airline_name" type="text" name = "airline_name" placeholder="airline_name" required/>
 	<select name="travel_class" required/>
 		<option value ="Economy">Economy</option>
@@ -111,7 +111,7 @@
 	{% if returnFlights%}
 	<label>Return Flight</label>
 	<input id="purchase_form_flight_number_return" type="text" name = "flight_number_return" placeholder="flight_number"/>
-	<input id="purchase_form_departure_date_return" type="text" name = "departure_date_return" placeholder="departure_date"/>
+	<input id="purchase_form_departure_date_return" type="text" name = "departure_date_time_return" placeholder="departure_date"/>
 	<input id="purchase_form_airline_name_return" type="text" name = "airline_name_return" placeholder="airline_name"/>
 	<select name="travel_class_return">
 		<option value ="Economy">Economy</option>
@@ -130,6 +130,9 @@
 	</select>
 	<input type="submit" value = Submit />
 </form>
+{% if purchaseStatus %}
+<p>{{purchaseStatus}}</p>
+{% endif %}
 {% endif %}
 
 <p>Search for a flight's status</p> 
