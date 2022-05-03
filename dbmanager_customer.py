@@ -1,7 +1,6 @@
 import pymysql.cursors
 import os
 from dotenv import load_dotenv
-from models import CUSTOMER, STAFF
 import hashlib
 from datetime import date, datetime, timedelta # modified here
 
@@ -74,29 +73,6 @@ def registerCustomer(customer):
         cursor.close()
         return customer["email"]
 
-def registerStaff(staff):
-    """
-    dict[email, name, ...]
-    """
-    conn = createConnection()
-    cursor = conn.cursor()
-    exists = checkUserExistsInDb("airline_staff", "username", staff["username"], cursor)
-    if (exists):
-        cursor.close()
-        return False
-    else:
-        password = staff["password"]
-        staff["password"] = hashlib.md5(password.encode()).hexdigest()
-        insertStaff = f"INSERT INTO airline_staff VALUES ('%(username)s', '%(password)s', '%(first_name)s', '%(last_name)s', '%(date_of_birth)s', '%(airline)s')" % staff
-        cursor.execute(insertStaff)
-        conn.commit()
-        # now insert phone
-        insertStaffPhone = f"INSERT INTO airline_staff_phones VALUES ('%(username)s', '%(phone_number)s')" % staff
-        cursor.execute(insertStaffPhone)
-        conn.commit()
-        cursor.close()
-        return staff["username"]
-
 def searchFlights(source, destination, departure_date):
     conn = createConnection()
     cursor = conn.cursor()
@@ -118,43 +94,6 @@ def convertToDict(field, lists):
     return dict
 
 
-# AIRLINE STAFF USE CASE
-
-# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
-def findFutureAirlineFlights(username):
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
-    airline = staff["airline_name"]
-    #fromToday30 = datetime.today().strftime("%Y-%m-%d") + timedelta(days=30) modified here
-    fromToday30 = (datetime.today() + timedelta(days=30)).strftime("%Y-%m-%d")
-    query = f"SELECT * FROM flight WHERE departure_date_time < '%s' AND airline_name = '%s'" % (fromToday30, airline) # modified here (added a pair of parenthesis)
-    cursor.execute(query)
-    flights = cursor.fetchall()
-    cursor.close()
-    return flights
-
-# 2. CREATE NEW FLIGHTS
-def createFlight(flight):
-    conn = createConnection()
-    cursor = conn.cursor()
-    query = f"INSERT INTO flight VALUES ('%(flight_number)s', '%(airplane_id)s', '%(departure_date_time)s', '%(departure_airport_code)s', '%(arrival_date_time)s', '%(arrival_airport_code)s', '%(base_price)s', '%(status)s', '%(airline_name)s')" % flight
-    cursor.execute(query)
-    conn.commit()
-    cursor.close()
-    return flight["flight_number"]
-
-def changeFlightStatus(status, flight_number, departure_date_time, username):
-    conn = createConnection()
-    cursor = conn.cursor()
-    staff = checkUserExistsInDb("airline_staff", "username", username, cursor)
-    airline = staff["airline_name"]
-    updateFlightStatus = f"UPDATE flight SET status = '%s' WHERE flight_number = '%s' AND departure_date_time = '%s' AND airline_name = '%s'" % (status, flight_number, departure_date_time, airline)
-    cursor.execute(updateFlightStatus)
-    conn.commit()
-    cursor.close()
-    return flight_number
-
 # print("Flights:", findFutureAirlineFlights("allison2@allison.com"))
 
 # Customer Use case
@@ -167,11 +106,10 @@ def viewMyFlights(email):
     if (exists):
         today = date.today()
         today = today.strftime("%Y-%m-%d")
-        cursor.execute("SELECT * FROM flight WHERE departure_date_time >= %s", (today))
+        cursor.execute("SELECT flight_number, departure_date_time, airline_name FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND customer_email = %s;", email)
         conn.commit()
         flights = cursor.fetchall()
         cursor.close()
-        import pdb; pdb.set_trace()
         return flights
     else:
         cursor.close()
@@ -207,6 +145,19 @@ def searchFlights_customer(source, destination, departure_date, return_date=None
     return convertToDict("flight_number", matchingFlights)
 
 # 3. Purchase tickets (for the front end, may implement together with the "searchFlights")
+def purchaseTicketsDict(purchase):
+    email = purchase["customer_email"]
+    airline_name = purchase["airline_name"]
+    flight_number = purchase["flight_number"]
+    departure_date_time = purchase["departure_date_time"]
+    travel_class = purchase["travel_class"]
+    card_type = purchase["card_type"]
+    card_number = purchase["card_number"]
+    name_on_card = purchase["name_on_card"]
+    card_exp = purchase["card_expiration"]
+    
+    return purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
+
 def purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_calss, card_type, card_number, name_on_card, card_exp): # various inputs through a form
     # I suppose here to be sure that two tickets are for the same flights, they must have the same airline_name, flight_number and departure_date_time (including hour-mintue-second), because one possible case is that the same flight go round trip for multiple times within a single day
     conn = createConnection()
@@ -295,6 +246,14 @@ def cancelTrip(email, ticket_id):
         return False
 
 # 5. Give Ratings and Comment on previous flights
+def giveRatingsAndComments(email, rating_comment):
+    rating = rating_comment["rating"]
+    comment = rating_comment["comment"]
+    ticket_id = rating_comment["ticket_id"]
+    
+    giveRatings(email, ticket_id, rating)
+    giveComments(email, ticket_id, comment)
+
 def giveRatings(email, ticket_id, rating):
     conn = createConnection()
     cursor = conn.cursor()
