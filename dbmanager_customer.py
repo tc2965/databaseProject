@@ -158,14 +158,19 @@ def purchaseTicketsDict(purchase):
     name_on_card = purchase["name_on_card"]
     card_exp = purchase["card_expiration"]
     
-    return_flight_number = purchase.get("return_flight_number")
-    return_airline_name = purchase.get("return_airline_name")
-    return_departure_date_time = purchase.get("return_departure_date_time")
-    print(return_flight_number, return_airline_name, return_departure_date_time)  
+    return_flight_number = purchase.get("flight_number_return")
+    return_airline_name = purchase.get("airline_name_return")
+    return_departure_date_time = purchase.get("departure_date_time_return") 
 
     to_trip = purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
+    print("Purchasing Ticket for: ", flight_number, airline_name, departure_date_time) 
+
+    error = to_trip.get("error")
+    if error: 
+        return [to_trip]
     
     if return_flight_number and return_airline_name and return_departure_date_time: 
+        print("Purchasing Ticket for: ", return_flight_number, return_airline_name, return_departure_date_time) 
         return_trip = purchaseTickets(email, return_airline_name, return_flight_number, return_departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
         return [to_trip, return_trip]
     else: 
@@ -203,9 +208,9 @@ def purchaseTickets(email, airline_name, flight_number, departure_date_time, tra
 
         tickets = cursor.fetchall()
         if len(tickets) == 0:
-            print("No available tickets")
+            error = f"No available tickets for {flight_number}"
             cursor.close()
-            return False
+            return {"error": error}
         ticket = tickets[0]
         ticket_id = ticket["ID"]
 
@@ -224,10 +229,10 @@ def purchaseTickets(email, airline_name, flight_number, departure_date_time, tra
         cursor.execute("INSERT INTO purchases VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (ticket_id, sold_price, purchase_time, email, card_type, card_number, name_on_card, card_exp))
         conn.commit()
         cursor.close()
-        return ticket_id
+        return {"success": ticket_id}
     else:
         cursor.close()
-        return False
+        return {"error": "Trouble purchasing, plesae try again later"}
 
 # 4. Cancel Trip
 def cancelTrip(email, ticket_id):

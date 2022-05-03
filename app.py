@@ -122,6 +122,7 @@ def viewFlightStatus():
 # 2. REGISTER
 @app.route('/registerAuth/<type_user>', methods=['GET', 'POST'])
 def registerAuth(type_user):
+    session.clear()
     if type_user == "customer":
         customer = customer_parser.parse_args()
         inDB = dbmanager.registerCustomer(customer)
@@ -148,6 +149,7 @@ def registerAuth(type_user):
 # 3. LOGIN
 @app.route('/loginAuth', methods=['GET', 'POST'])
 def loginAuth():
+    session.clear()
 	#grabs information from the forms
     username = request.form['username']
     password = request.form['password']
@@ -194,14 +196,25 @@ def viewMyFlights():
 # 3. PURCHASE TICKETS
 @app.route('/purchase_tickets', methods=['POST'])
 def purchaseTickets():
+    session.pop("error", None)
+    session.pop("purchaseStatus", None)
     purchase = purchase_parser.parse_args()
     purchase["customer_email"] = session.get("username")
     success = dbmanager_customer.purchaseTicketsDict(purchase)
-    if success: 
-        purchaseStatus = f"Purchasing successful! Ticket ID is {success}"
-    else:
-        purchaseStatus = "Purchasing error, please try again later"
-    session["purchaseStatus"] = purchaseStatus
+    error_messages = []
+    purchased = []
+    for tickets in success:
+        error = tickets.get("error")
+        success = tickets.get("success")
+        if error:
+            error_messages.append(error)
+        elif success: 
+            purchased.append(success)
+        else: 
+            error_messages.append("Error purchasing, please try again later")
+    session["error"] = error_messages
+    if purchased:
+        session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
     return redirect(url_for("customerHome"))
 
 # 4. CANCEL TRIP 
@@ -475,7 +488,8 @@ def customerHome():
     returnFlights = session.get("returnFlights")
     flight_status = session.get("status")
     purchaseStatus = session.get("purchaseStatus")
-    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus)
+    error = session.get("error")
+    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
