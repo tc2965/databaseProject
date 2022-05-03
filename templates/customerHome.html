@@ -52,8 +52,8 @@
 	</TR>
 	{% endfor %}
 </table>
-<input type="button" id="one_way" value="One Way" onclick="oneWaySelected()" /> 
-<input type="button" id="round_trip" value="Round Trip" onclick="roundTripSelected()" />
+<button onclick="oneWaySelected()">Purchase Selected Trip</button>
+<button onclick="queryForRoundTrip()">Search For a Return Trip</button>
 {% endif%}
 
 <p id="return_form">Search for return flights</p>
@@ -91,12 +91,45 @@
 	</TR>
 	{% endfor %}
 </table>
-<input type="button" id="one_way" value="One Way" onclick="oneWaySelected()" /> 
-<input type="button" id="round_trip" value="Round Trip" onclick="roundTripSelected()" />
+<button onclick="roundTripSelected()">Purchase Round Trip</button>
 {% endif%}
 
 {% if flights or returnFlights %}
-
+<p id="purchase_form">Purchase Tickets</p>
+<form id="purchase_form" action="/purchase_tickets" method="POST">
+	<!--one way info-->
+	<label>Source Flight</label>
+	<input id="purchase_form_flight_number" type="text" name = "flight_number" placeholder="flight_number" required/>
+	<input id="purchase_form_departure_date" type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input id="purchase_form_airline_name" type="text" name = "airline_name" placeholder="airline_name" required/>
+	<select name="travel_class" required/>
+		<option value ="Economy">Economy</option>
+		<option value ="Business">Business</option>
+		<option value ="First">First</option>
+	</select>
+	<br>
+	{% if returnFlights%}
+	<label>Return Flight</label>
+	<input id="purchase_form_flight_number_return" type="text" name = "flight_number_return" placeholder="flight_number"/>
+	<input id="purchase_form_departure_date_return" type="text" name = "departure_date_return" placeholder="departure_date"/>
+	<input id="purchase_form_airline_name_return" type="text" name = "airline_name_return" placeholder="airline_name"/>
+	<select name="travel_class_return">
+		<option value ="Economy">Economy</option>
+		<option value ="Business">Business</option>
+		<option value ="First">First</option>
+	</select>
+	<br>
+	{% endif %}
+	<label>Payment Info</label>
+	<input id="purchase_form_flight_number_return" type="text" name = "card_number" placeholder="card_number"/>
+	<input id="purchase_form_flight_number_return" type="text" name = "name_on_card" placeholder="name_on_card"/>
+	<input id="purchase_form_flight_number_return" type="text" name = "card_expiration" placeholder="card_expiration"/>
+	<select name="card_type" required>
+		<option value ="Debit">Debit</option>
+		<option value ="Credit">Credit</option>
+	</select>
+	<input type="submit" value = Submit />
+</form>
 {% endif %}
 
 <p>Search for a flight's status</p> 
@@ -120,8 +153,6 @@
 	var selected = table.getElementsByClassName('selected');
 	table.onclick = highlight;
 	table_return.onclick = highlight;
-	var oneWayFlights = []
-	var roundTripFlights = []
 
 	function highlight(e) {
 		if (selected[0]) selected[0].className = '';
@@ -129,30 +160,51 @@
 	}
 
 	function oneWaySelected(){
+		console.log("oneWaySelected")
 		var element = document.querySelectorAll('.selected');
+		console.log(element)
 		if(element[0]!== undefined){ //it must be selected
 			var flight_number = element[0].children[0].firstChild.data
 			var departure_date_time = element[0].children[1].firstChild.data
 			var airline_name = element[0].children[2].firstChild.data
 			console.log(flight_number, departure_date_time, airline_name)
-			oneWayFlights[0] = flight_number
-			oneWayFlights[1] = departure_date_time 
-			oneWayFlights[2] = airline_name
+			oneWayFlights = [flight_number, departure_date_time, airline_name]
+			document.getElementById("purchase_form_flight_number").value =flight_number;
+			document.getElementById("purchase_form_departure_date").value =departure_date_time;
+			document.getElementById("purchase_form_airline_name").value =airline_name;
 			console.log(oneWayFlights)
+			return oneWayFlights
 		}
 		console.log(element)
 	}
+
 	function roundTripSelected(){
+		console.log("roundTripSelected")
+		var element = document.querySelectorAll('.selected');
+		console.log(element)
+		if(element[0]!== undefined){ //it must be selected
+			var flight_number = element[0].children[0].firstChild.data
+			var departure_date_time = element[0].children[1].firstChild.data
+			var airline_name = element[0].children[2].firstChild.data
+			console.log(flight_number, departure_date_time, airline_name)
+			oneWayFlights = [flight_number, departure_date_time, airline_name]
+			document.getElementById("purchase_form_flight_number_return").value =flight_number;
+			document.getElementById("purchase_form_departure_date_return").value =departure_date_time;
+			document.getElementById("purchase_form_airline_name_return").value =airline_name;
+			console.log(oneWayFlights)
+			return oneWayFlights
+		}
+		console.log(element)
+	}
+
+	function queryForRoundTrip(){
+		console.log("queryForRoundTrip")
 		var element = document.querySelectorAll('.selected');
 		if(element[0]!== undefined){ //it must be selected
 			var departure_date_time = element[0].children[5].firstChild.data
 			var source = element[0].children[6].firstChild.data
 			var destination = element[0].children[4].firstChild.data
 			console.log(departure_date_time, source, destination)
-			roundTripFlights[0] = departure_date_time
-			roundTripFlights[1] = source 
-			roundTripFlights[2] = destination
-			console.log(roundTripFlights)
 			document.getElementById("return_form_source").value =source;
 			document.getElementById("return_form_destination").value =destination;
 			document.getElementById("return_form_departure_date").value =departure_date_time;

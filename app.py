@@ -156,7 +156,7 @@ def loginAuth():
 		#session is a built in
         session['username'] = username
         if type_user == 'customer':
-            return redirect(url_for('home'))
+            return redirect(url_for('customerHome'))
         else:
             session["airline"] = exists["airline_name"]
             return redirect(url_for('staffHome'))
@@ -175,22 +175,23 @@ def viewMyFlights():
     if request.method == 'GET':
         return dbmanager_customer.viewMyFlights(session["username"])
 
-# 2. SEARCH FOR FLIGHTS
-# I don't think we really need to do two searchFlights functions?
-@app.route('/flight/search/', methods=['POST'])
-def searchFlights(): 
-    # if it's round trip, just use this endpoint again
-    source = request.form["source"] # airport code
-    destination = request.form["destination"]
-    departure = request.form["departure_date"]
-    return_date = request.form.get("return_date")
+# # 2. SEARCH FOR FLIGHTS
+# # I don't think we really need to do two searchFlights functions?
+# @app.route('/flight/search/', methods=['POST'])
+# def searchFlights(): 
+#     # if it's round trip, just use this endpoint again
+#     source = request.form["source"] # airport code
+#     destination = request.form["destination"]
+#     departure = request.form["departure_date"]
+#     return_date = request.form.get("return_date")
     
-    return dbmanager_customer.searchFlights_customer(source, destination, departure, return_date)
+#     return dbmanager_customer.searchFlights_customer(source, destination, departure, return_date)
 
 # 3. PURCHASE TICKETS
 @app.route('/purchase_tickets', methods=['POST'])
 def purchaseTickets():
     purchase = purchase_parser.parse_args()
+    purchase["customer_email"] = session.get("username")
     return dbmanager_customer.purchaseTicketsDict(purchase)
 
 # 4. CANCEL TRIP 
@@ -212,7 +213,7 @@ def rateAndComment():
 
 # 6. TRACK MY SPENDING
 @app.route('/track_my_spending/default', methods=['GET'])
-def trackMySpending():
+def trackMySpendingDefault():
     if not session.get("username"):
             return None # todo render page with error 
     if request.method == 'GET':

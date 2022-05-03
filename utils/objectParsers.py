@@ -36,10 +36,16 @@ purchase_parser.add_argument("card_type", type=str, location='form')
 purchase_parser.add_argument("card_number", type=str, location='form')
 purchase_parser.add_argument("name_on_card", type=str, location='form')
 purchase_parser.add_argument("card_expiration", type=str, location='form')
-purchase_parser.add_argument("travel_class", type=str, location='form')
-purchase_parser.add_argument("airline_name", type=str, location='form')
+
 purchase_parser.add_argument("flight_number", type=str, location='form')
 purchase_parser.add_argument("departure_date_time", type=str, location='form')
+purchase_parser.add_argument("airline_name", type=str, location='form')
+purchase_parser.add_argument("travel_class", type=str, location='form')
+
+purchase_parser.add_argument("flight_number_return", type=str, location='form')
+purchase_parser.add_argument("departure_date_return", type=str, location='form')
+purchase_parser.add_argument("airline_name_return", type=str, location='form')
+purchase_parser.add_argument("travel_class_return", type=str, location='form')
 
 flight_parser = reqparse.RequestParser() 
 flight_parser.add_argument("flight_number", type=str, location='form')
