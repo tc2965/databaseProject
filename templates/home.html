@@ -2,11 +2,9 @@
 <head>
 </head>
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="post" required/> </br>
-	<input type="submit" value = Post />
-</form>
+<h1>Welcome</h1>
+<a href="/login">Login</a>
+<a href="/register">Register</a>
 
 <style type="text/css">
 	table, th, td{
@@ -20,12 +18,6 @@
 	}
 </style>
 
-<table>
-	<th>Time</th>
-	<th>Post</th>
-
-</table>
-
 <p>Search for flights</p>
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
@@ -34,7 +26,7 @@
 	<input type="submit" value = Submit />
 </form>
 {% if flights%}
-<p>View {{airline}} Flights</p>
+<p>View Flights</p>
 <table id="table">
 	<TR>
 		<TD>flight_number</TD>
@@ -115,8 +107,6 @@
 {% if flight_status%}
 	<p>{{airline}} Flight#{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
 {% endif%}
-
-<a href="/logout">Logout</a>
 
 </body>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
