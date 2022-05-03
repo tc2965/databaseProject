@@ -124,7 +124,7 @@ def searchFlights(source, destination, departure_date):
     query = "SELECT * FROM flight WHERE departure_airport_code = %s AND arrival_airport_code = %s AND departure_date_time > %s"
     params = (source, destination, departure_date)
     matchingFlights = executeQuery(query, params)
-    return {"data": matchingFlights}
+    return matchingFlights
 
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):

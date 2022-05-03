@@ -1,4 +1,14 @@
+<html>
+<head>
+</head>
+<body>
+<style type="text/css">
+	table, th, td{
+		border: 1px solid black;
+	}
+</style>
 <p>View reports and revenue for Airline {{airline}} </p>
+<a href="/staffHome"><button>Go back home</button></a>
 
 <p>Search for flight reports within a period</p> 
 <form action="/viewReport/date" method="POST">
@@ -69,14 +79,14 @@
 {% endif%}
 
 <a href="/viewTopDestinations/month"><button>View Top Destinations (3 Months)</button></a>
-{% if monthDestination%}
+{% if monthDestinations%}
 <table>
     <TR>
         <TD>City</TD>
         <TD>Country</TD>
         <TD>Tickets Sold</TD>
     </TR>
-    {% for destination in monthDestination %}
+    {% for destination in monthDestinations %}
     <TR>
         <TD>{{destination.city}}</TD>
         <TD>{{destination.country}}</TD>
@@ -86,3 +96,22 @@
 </table>
 {% endif%}
 <a href="/viewTopDestinations/year"><button>View Top Destinations (1 Year)</button></a>
+{% if yearDestinations %}
+<table>
+    <TR>
+        <TD>City</TD>
+        <TD>Country</TD>
+        <TD>Tickets Sold</TD>
+    </TR>
+    {% for destination in yearDestinations %}
+    <TR>
+        <TD>{{destination.city}}</TD>
+        <TD>{{destination.country}}</TD>
+        <TD>{{destination.tickets_sold}}</TD>
+    </TR>
+    {% endfor %}
+</table>
+{% endif%}
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</body>
+</html>
