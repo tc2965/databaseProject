@@ -2,23 +2,21 @@
 <head>
 </head>
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="post" required/> </br>
-	<input type="submit" value = Post />
-</form>
+<h1>Welcome</h1>
+<a href="/login">Login</a>
+<a href="/register">Register</a>
 
 <style type="text/css">
 	table, th, td{
 		border: 1px solid black;
 	}
+	td {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+	tr:hover { background-color : #FDF0D5; }
+	.selected {
+		background-color: #89ae37;
+		color: #FFF;
+	}
 </style>
-
-<table>
-	<th>Time</th>
-	<th>Post</th>
-
-</table>
 
 <p>Search for flights</p>
 <form action="/flight/search/" method="POST">
@@ -27,6 +25,76 @@
 	<input type="text" name = "departure_date" placeholder="departure_date" required/>
 	<input type="submit" value = Submit />
 </form>
+{% if flights%}
+<p>View Flights</p>
+<table id="table">
+	<TR>
+		<TD>flight_number</TD>
+		<TD>departure_date_time</TD>
+		<TD>airline_name</TD>
+		<TD>airplane_id</TD>
+		<TD>departure_airport_code</TD>
+		<TD>arrival_date_time</TD>
+		<TD>arrival_airport_code</TD>
+		<TD>base_price</TD>
+		<TD>status</TD>
+	</TR>
+	{% for flight in flights %}
+	<TR>
+	   <TD>{{flight.flight_number}}</TD>
+	   <TD>{{flight.departure_date_time}}</TD>
+	   <TD>{{flight.airline_name}}</TD>
+	   <TD>{{flight.airplane_id}}</TD>
+	   <TD>{{flight.departure_airport_code}}</TD>
+	   <TD>{{flight.arrival_date_time}}</TD>
+	   <TD>{{flight.arrival_airport_code}}</TD>
+	   <TD>{{flight.base_price}}</TD>
+	   <TD>{{flight.status}}</TD>
+	</TR>
+	{% endfor %}
+</table>
+<input type="button" id="one_way" value="One Way" onclick="oneWaySelected()" /> 
+<input type="button" id="round_trip" value="Round Trip" onclick="roundTripSelected()" />
+{% endif%}
+
+<p id="return_form">Search for return flights</p>
+<form id="return_form" action="/flight/search/return" method="POST">
+	<input id="return_form_source" type="text" name = "source" placeholder="source" required/>
+	<input id="return_form_destination" type="text" name = "destination" placeholder="destination" required/>
+	<input id="return_form_departure_date" type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if returnFlights%}
+<p>View {{airline}} Flights</p>
+<table id="table">
+	<TR>
+		<TD>flight_number</TD>
+		<TD>departure_date_time</TD>
+		<TD>airline_name</TD>
+		<TD>airplane_id</TD>
+		<TD>departure_airport_code</TD>
+		<TD>arrival_date_time</TD>
+		<TD>arrival_airport_code</TD>
+		<TD>base_price</TD>
+		<TD>status</TD>
+	</TR>
+	{% for flight in returnFlights %}
+	<TR>
+	   <TD>{{flight.flight_number}}</TD>
+	   <TD>{{flight.departure_date_time}}</TD>
+	   <TD>{{flight.airline_name}}</TD>
+	   <TD>{{flight.airplane_id}}</TD>
+	   <TD>{{flight.departure_airport_code}}</TD>
+	   <TD>{{flight.arrival_date_time}}</TD>
+	   <TD>{{flight.arrival_airport_code}}</TD>
+	   <TD>{{flight.base_price}}</TD>
+	   <TD>{{flight.status}}</TD>
+	</TR>
+	{% endfor %}
+</table>
+<input type="button" id="one_way" value="One Way" onclick="oneWaySelected()" /> 
+<input type="button" id="round_trip" value="Round Trip" onclick="roundTripSelected()" />
+{% endif%}
 
 <p>Search for a flight's status</p> 
 <form action="/flight_status/view/" method="POST">
@@ -36,10 +104,54 @@
 	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
 	<input type="submit" value = Submit />
 </form>
-
-<a href="/logout">Logout</a>
+{% if flight_status%}
+	<p>{{airline}} Flight#{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
+{% endif%}
 
 </body>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+	var table = document.getElementById('table');
+	var selected = table.getElementsByClassName('selected');
+	table.onclick = highlight;
+	var oneWayFlights = []
+	var roundTripFlights = []
 
+	function highlight(e) {
+		if (selected[0]) selected[0].className = '';
+		e.target.parentNode.className = 'selected';
+	}
 
+	function oneWaySelected(){
+		var element = document.querySelectorAll('.selected');
+		if(element[0]!== undefined){ //it must be selected
+			var flight_number = element[0].children[0].firstChild.data
+			var departure_date_time = element[0].children[1].firstChild.data
+			var airline_name = element[0].children[2].firstChild.data
+			console.log(flight_number, departure_date_time, airline_name)
+			oneWayFlights[0] = flight_number
+			oneWayFlights[1] = departure_date_time 
+			oneWayFlights[2] = airline_name
+			console.log(oneWayFlights)
+		}
+		console.log(element)
+	}
+	function roundTripSelected(){
+		var element = document.querySelectorAll('.selected');
+		if(element[0]!== undefined){ //it must be selected
+			var departure_date_time = element[0].children[5].firstChild.data
+			var source = element[0].children[6].firstChild.data
+			var destination = element[0].children[4].firstChild.data
+			console.log(departure_date_time, source, destination)
+			roundTripFlights[0] = departure_date_time
+			roundTripFlights[1] = source 
+			roundTripFlights[2] = destination
+			console.log(roundTripFlights)
+			document.getElementById("return_form_source").value =source;
+			document.getElementById("return_form_destination").value =destination;
+			document.getElementById("return_form_departure_date").value =departure_date_time;
+		}
+		console.log(element)
+	}
+</script>
 </html>

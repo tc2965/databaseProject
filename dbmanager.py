@@ -116,7 +116,7 @@ def registerStaff(staff):
         # now insert phone
         insertStaffPhone = "INSERT INTO airline_staff_phones VALUES (%(username)s, %(phone_number)s)"
         executeCommitQuery(insertStaffPhone, staff)
-        return staff["username"]
+        return (staff["username"], staff["airline"])
 
 # 1. VIEW PUBLIC INFO A 
 # for round trips, just use this endpoint again and make departure = arrival of the first result
@@ -124,7 +124,7 @@ def searchFlights(source, destination, departure_date):
     query = "SELECT * FROM flight WHERE departure_airport_code = %s AND arrival_airport_code = %s AND departure_date_time > %s"
     params = (source, destination, departure_date)
     matchingFlights = executeQuery(query, params)
-    return {"data": matchingFlights}
+    return matchingFlights
 
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
@@ -132,10 +132,10 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
         query = "SELECT status FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
         params = (airline, flight_number, departure, arrival)
     else:
-        query = "SELECT status FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
         params = (airline, flight_number, departure)
     status = executeQuery(query, params, True)
-    return {"status": status}
+    return status
 
 # AIRLINE STAFF USE CASE
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
@@ -213,23 +213,24 @@ def viewFlightRatings(flight_number, username):
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
     params = flight_number
     ratings = executeQuery(query, params)
-    return {"data": ratings}
+    return ratings
 
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
-    mostFrequentFlyer = executeQuery(query, airline)
-    return {"mostFrequentFlyer": mostFrequentFlyer}
+    mostFrequentFlyer = executeQuery(query, airline, True)
+    print(mostFrequentFlyer)
+    return mostFrequentFlyer
 
 def viewCustomerFlights(customer_email, username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    query = "SELECT flight_number FROM purchases INNER JOIN ticket ON purchases.ticket_id = ticket.ID AND customer_email = %s AND airline_name = %s"
+    query = "SELECT flight_number, departure_date_time, airline_name FROM purchases INNER JOIN ticket ON purchases.ticket_id = ticket.ID AND customer_email = %s AND airline_name = %s"
     params = (customer_email, airline)
     flights = executeQuery(query, params)
-    return {"data": flights}
+    return flights
     
 # 8. VIEW REPORTS 
 def viewReportDate(start, end, username):
@@ -238,7 +239,7 @@ def viewReportDate(start, end, username):
     query = "SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = %s AND date_time BETWEEN %s AND %s GROUP BY flight_number;" 
     params = (airline, start, end)
     numTicket = executeQuery(query, params)
-    return {"data": numTicket}
+    return numTicket
 
 # 9. VIEW REVENUE
 def viewRevenue(start, end, username):
@@ -260,7 +261,7 @@ def viewRevenue(start, end, username):
             "airline": airline, 
             "period_start": start,
             "period_end": end}
-    return {"data": data}
+    return data
 
 # 10. VIEW REVENUE TRAVEL CLASS  
 def viewRevenueTravelClass(username):
@@ -274,7 +275,7 @@ def viewRevenueTravelClass(username):
     createSoldView = "CREATE VIEW sold_travel AS SELECT travel_class, SUM(sold_price) as sold_price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class;"
     executeQuery(createSoldView, params)
     
-    revenueQuery = "SELECT sold_travel.travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"
+    revenueQuery = "SELECT sold_travel.travel_class as travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"
     revenue = executeQuery(revenueQuery)
     
     dropBaseViews = "DROP VIEW base_travel;"
@@ -282,7 +283,7 @@ def viewRevenueTravelClass(username):
     dropSoldView = "DROP VIEW sold_travel;"
     executeQuery(dropSoldView)
 
-    return {"data":revenue}
+    return revenue
     
 # 11. VIEW TOP DESTINATIONS
 def viewTopDestinations(period, username):
@@ -303,7 +304,7 @@ def viewTopDestinations(period, username):
     
     deleteViewQuery = "DROP view airport_count;"
     executeQuery(deleteViewQuery)
-    return {"data": cityCountryTicketsSold}
+    return cityCountryTicketsSold
 
 def assertStaffPermission(username, airline): 
     staff = checkUserExistsInDb("airline_staff", username)

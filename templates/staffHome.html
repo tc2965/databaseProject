@@ -12,17 +12,160 @@
 	table, th, td{
 		border: 1px solid black;
 	}
+	td {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+	tr:hover { background-color : #89ae37; }
+	.selected {
+		background-color: brown;
+		color: #FFF;
+	}
 </style>
 
+<a href="/view_most_frequent_customer"><button>Refresh Most Frequent Flyer</button></a>
+{% if mostFrequentFlyer %}
+<p>Current Most Frequent Flyer is {{mostFrequentFlyer.customer_email}} with {{mostFrequentFlyer.trips}} trips</p>
+{% endif %}
+
+<p>Lookup a customer's flight</p>
+<form action="/view_customer_flights" method="POST">
+	<input type="text" name = "customer_email" placeholder="customer_email" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if customer_flights%}
 <table>
-	<th>Time</th>
-	<th>Post</th>
-
+<TR>
+	<TD>airline_name</TD>
+	<TD>flight_number</TD>
+	<TD>departure_date_time</TD>
+</TR>
+<TR>
+{% for flight in customer_flights %}
+<TD>{{flight.airline_name}}</TD>
+<TD>{{flight.flight_number}}</TD>
+<TD>{{flight.departure_date_time}}</TD>
+</TR>
+{% endfor %}
 </table>
+{% endif%}
 
-<a href="/logout">Logout</a>
 
+<p>Search for flights</p>
+<form action="/flight/search/" method="POST">
+	<input type="text" name = "source" placeholder="source" required/>
+	<input type="text" name = "destination" placeholder="destination" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="submit" value = Submit />
+</form>
+
+<p>Search for a flight's status</p> 
+<form action="/flight_status/view/" method="POST">
+	<input type="text" name = "airline" placeholder="airline" required/>
+	<input type="text" name = "flight_number" placeholder="flight_number" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
+	<input type="submit" value = Submit />
+</form>
+{% if flight_status%}
+	<p>{{airline}} Flight #{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
+{% endif%}
+
+<p>Search for a flight's ratings and comments</p> 
+<form action="/view_flight_ratings/" method="POST">
+	<input type="text" name = "flight_number" placeholder="flight_number" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if ratings%}
+<table>
+<TR>
+	<TD>airline_name</TD>
+	<TD>flight_number</TD>
+	<TD>departure_date_time</TD>
+	<TD>customer_email</TD>
+	<TD>rating</TD>
+	<TD>comment</TD>
+</TR>
+<TR>
+{% for flight in ratings %}
+<TD>{{flight.airline_name}}</TD>
+<TD>{{flight.flight_number}}</TD>
+<TD>{{flight.departure_date_time}}</TD>
+<TD>{{flight.customer_email}}</TD>
+<TD>{{flight.rating}}</TD>
+<TD>{{flight.comment}}</TD>
+</TR>
+{% endfor %}
+</table>
+{% endif%}
+
+
+<p>Search for flights within a period</p> 
+<form action="/view_flights/time" method="POST">
+	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
+	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="submit" value = Submit />
+</form>
+
+<p>Search for flights by airports</p> 
+<form action="/view_flights/airport" method="POST">
+	<select name="type">
+		<option value ="source">from</option>
+		<option value ="destination">to</option>
+	</select>
+	<input type="text" name = "airport" placeholder="JFK" required/>
+	<input type="submit" value = Submit />
+</form>
+
+{% if flights%}
+<p>View {{airline}} Flights</p>
+<table>
+	<TR>
+		<TD>flight_number</TD>
+		<TD>departure_date_time</TD>
+		<TD>airline_name</TD>
+		<TD>airplane_id</TD>
+		<TD>departure_airport_code</TD>
+		<TD>arrival_date_time</TD>
+		<TD>arrival_airport_code</TD>
+		<TD>base_price</TD>
+		<TD>status</TD>
+	</TR>
+	{% for flight in flights %}
+	<TR>
+	   <TD>{{flight.flight_number}}</TD>
+	   <TD>{{flight.departure_date_time}}</TD>
+	   <TD>{{flight.airline_name}}</TD>
+	   <TD>{{flight.airplane_id}}</TD>
+	   <TD>{{flight.departure_airport_code}}</TD>
+	   <TD>{{flight.arrival_date_time}}</TD>
+	   <TD>{{flight.arrival_airport_code}}</TD>
+	   <TD>{{flight.base_price}}</TD>
+	   <TD>{{flight.status}}</TD>
+	</TR>
+	{% endfor %}
+</table>
+{% endif%}
+
+
+<a href="/changeFlightStatus"><button>Change Flight Status</button></a>
+<a href="/createAirplane"><button>Create Airplane</button></a>
+<a href="/createAirport"><button>Create Airport</button></a>
+<a href="/createFlight"><button>Create Flight</button></a>
+<a href="/viewReports"><button>View Reports</button></a>
+
+<br>
+<a href="/logout"><button>Logout</button></a>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+	$("#table tr").click(function(){
+		$(this).addClass('selected').siblings().removeClass('selected');    
+		var value=$(this).find('td:first').html();
+		alert(value);    
+	 });
+	 
+	 $('.ok').on('click', function(e){
+		 alert($("#table tr.selected td:first").html());
+	 });
+</script>
 </body>
-
-
 </html>
+
