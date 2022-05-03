@@ -179,7 +179,10 @@ def viewMyFlights():
     if not session.get("username"):
         return None # todo render page with error 
     if request.method == 'GET':
-        return dbmanager_customer.viewMyFlights(session["username"])
+        myFlights = dbmanager_customer.viewMyFlights(session["username"])
+        return myFlights
+        session["myFlights"] = myFlights 
+        return redirect(url_for("customerHome"))
 
 # # 2. SEARCH FOR FLIGHTS
 # # I don't think we really need to do two searchFlights functions?
@@ -489,7 +492,8 @@ def customerHome():
     flight_status = session.get("status")
     purchaseStatus = session.get("purchaseStatus")
     error = session.get("error")
-    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error)
+    myFlights = viewMyFlights()
+    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():

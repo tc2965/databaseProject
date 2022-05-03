@@ -8,13 +8,33 @@
 	table, th, td{
 		border: 1px solid black;
 	}
-	td {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
-	tr:hover { background-color : #FDF0D5; }
+	.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+	tr.pick_flight:hover { background-color : #FDF0D5; }
 	.selected {
 		background-color: #89ae37;
 		color: #FFF;
 	}
 </style>
+
+{% if myFlights %}
+<p> Your upcoming flights: </p>
+<table >
+	<TR>
+		<TD>airline_name</TD>
+		<TD>departure_date_time</TD>
+		<TD>flight_number</TD>
+	</TR>
+	{% for flight in myFlights %}
+	<TR>
+		<TD>{{flight.airline_name}}</TD>
+	   <TD>{{flight.departure_date_time}}</TD>
+	   <TD>{{flight.flight_number}}</TD>
+	</TR>
+	{% endfor %}
+</table>
+{% else %}
+<p> You have no flights </p>
+{% endif %}
 
 <h2>Search for flights</h2>
 <form action="/flight/search/" method="POST">
@@ -39,7 +59,7 @@
 		<TD>status</TD>
 	</TR>
 	{% for flight in flights %}
-	<TR>
+	<TR class = "pick_flight">
 	   <TD>{{flight.flight_number}}</TD>
 	   <TD>{{flight.departure_date_time}}</TD>
 	   <TD>{{flight.airline_name}}</TD>
@@ -78,7 +98,7 @@
 		<TD>status</TD>
 	</TR>
 	{% for flight in returnFlights %}
-	<TR>
+	<TR class = "pick_flight">
 	   <TD>{{flight.flight_number}}</TD>
 	   <TD>{{flight.departure_date_time}}</TD>
 	   <TD>{{flight.airline_name}}</TD>
