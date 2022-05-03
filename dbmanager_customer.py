@@ -156,6 +156,13 @@ def purchaseTicketsDict(purchase):
     name_on_card = purchase["name_on_card"]
     card_exp = purchase["card_expiration"]
     
+    return_flight_number = purchase.get("return_flight_number")
+    return_airline_name = purchase.get("return_airline_name")
+    return_departure_date_time = purchase.get("return_departure_date_time")
+    
+    if return_flight_number and return_airline_name and return_departure_date_time: 
+        return_trip = purchaseTickets(email, return_airline_name, return_flight_number, return_departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
+    
     return purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
 
 def purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_calss, card_type, card_number, name_on_card, card_exp): # various inputs through a form
