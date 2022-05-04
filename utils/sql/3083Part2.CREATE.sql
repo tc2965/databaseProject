@@ -39,7 +39,7 @@ create table flight
     );
 
 create table ticket
-    (ID             varchar(15),
+    (ID             varchar(20),
      travel_class   varchar(15),
      airline_name   varchar(30),
      flight_number  varchar(15),
@@ -65,7 +65,7 @@ create table customer
     );
 
 create table purchases
-    (ticket_id      varchar(15),
+    (ticket_id      varchar(20),
      sold_price     decimal(19, 2),
      date_time      datetime,
      customer_email varchar(20),
@@ -98,7 +98,7 @@ create table airline_staff_phones
 
 create table ratings
     (customer_email     varchar(20),
-     ticket_id			varchar(15),
+     ticket_id			varchar(20),
      rating             int,
      comment            varchar(255),
      primary key (customer_email, ticket_id),
@@ -107,7 +107,7 @@ create table ratings
 
 create table comments
     (customer_email     varchar(20),
-     ticket_id			varchar(15),
+     ticket_id			varchar(20),
      customer_comment            varchar(255),
      primary key (customer_email, ticket_id),
      foreign key (customer_email, ticket_id) references purchases(customer_email, ticket_id)

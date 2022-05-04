@@ -2,8 +2,6 @@
 from email import charset
 from flask import Flask, render_template, request, session, url_for, redirect
 from flask_restx import reqparse
-import pymysql.cursors
-import os 
 from dotenv import load_dotenv
 from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser, create_tickets_parser
 import dbmanager
@@ -11,21 +9,6 @@ import dbmanager_customer
 
 #Initialize the app from Flask
 app = Flask(__name__)
-
-load_dotenv()
-host = os.environ.get("HOST")
-user = os.environ.get("USER")
-password = os.environ.get("PASSWORD")
-db = os.environ.get("DB")
-print(host, user, password, db)
-
-#Configure MySQL
-conn = pymysql.connect(host=host,
-                       user=user,
-                       password=password,
-                       db=db,
-                       charset='utf8mb4',
-                       cursorclass=pymysql.cursors.DictCursor)
 
 #Define a route to hello function
 @app.route('/')
