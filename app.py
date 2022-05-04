@@ -64,9 +64,16 @@ def searchFlights():
     departure = request.form["departure_date"]
     flights = dbmanager.searchFlights(source, destination, departure)
     
+    if flights:
+        session.pop("error", None)
+        session["flights"] = flights
+    else:
+        session.pop("flights", None)
+        session["error"] = f"No Flights Available F from {source} to {destination} at {departure}"
+
     username = session.get("username")
     airline = session.get("airline")
-    session["flights"] = flights
+
     if username and airline:
         # it's a staff
         return redirect(url_for("staffHome"))
@@ -87,7 +94,13 @@ def searchReturnFlights():
     username = session.get("username")
     airline = session.get("airline")
 
-    session["returnFlights"] = returnFlights
+    if returnFlights:
+        session.pop("error", None)
+        session["returnFlights"] = returnFlights
+    else:
+        session.pop("returnFlights", None)
+        session["error"] = f"No Flights Available F from {source} to {destination} at {departure}"
+
     if username and airline:
         # it's a staff
         return redirect(url_for("staffHome"))
@@ -156,14 +169,17 @@ def loginAuth():
     type_user = request.form['type']
 
     exists = dbmanager.checkUserLogin(type_user, username, password)
+    print(f"{exists=}")
     error = None
     if(exists):
 		#creates a session for the the user
 		#session is a built in
         session['username'] = username
         if type_user == 'customer':
+            session['name'] = exists.get("name", None)
             return redirect(url_for('customerHome'))
         else:
+            session['name'] = exists.get("first_name", None)
             session["airline"] = exists["airline_name"]
             return redirect(url_for('staffHome'))
         
@@ -217,8 +233,10 @@ def purchaseTickets():
             purchased.append(success)
         else: 
             error = tickets.get("error", "Error handling ticket purchase. Please try again later")
+            session.pop("purchaseStatus", None)
             session["error"] = error
     if purchased:
+        session.pop("error", None)
         session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
     return redirect(url_for("customerHome"))
 
@@ -254,6 +272,7 @@ def rateAndComment():
             session["rateTrip"] = response["success"]
         else: 
             session["error"] = response.get("error", "Trouble rating flight, try again later.")
+            print(session["error"])
         return redirect(url_for("manageFlights"))
 
 # 6. TRACK MY SPENDING
@@ -362,8 +381,9 @@ def flightStatus():
         status = request.form['status']
         flight_number = request.form['flight_number']
         departure_date_time = request.form['departure_date_time']
+        airline = request.form['airline_name']
         
-        message = dbmanager.changeFlightStatus(status, flight_number, departure_date_time, session["username"])
+        message = dbmanager.changeFlightStatus(status, flight_number, departure_date_time, airline, session["username"])
         return changeFlightStatus(message=message)
         
 # 4. ADD AIRPLANE 
@@ -433,11 +453,12 @@ def viewCustomerFlights():
 def viewReports():
     revenueTravelClass = session.get("viewRevenueTravelClass")
     report = session.get("viewReportDate")
-    revenue = session.get("revenue")
+    flightRevenue = session.get("flightRevenue")
+    purchaseRevenue = session.get("purchaseRevenue")
     travel_class_revenue = session.get("travel_class_revenue")
     monthDestinations = session.get("monthDestinations")
     yearDestinations = session.get("yearDestinations")
-    return render_template("viewReports.html", airline=session["airline"], revenueTravelClass=revenueTravelClass, report=report, revenue=revenue, travel_class_revenue=travel_class_revenue, monthDestinations=monthDestinations, yearDestinations=yearDestinations)
+    return render_template("viewReports.html", airline=session["airline"], revenueTravelClass=revenueTravelClass, report=report, flightRevenue=flightRevenue, purchaseRevenue=purchaseRevenue, travel_class_revenue=travel_class_revenue, monthDestinations=monthDestinations, yearDestinations=yearDestinations)
 
 # /viewReport/2022-01-01/2023-01-01
 @app.route('/viewReport/date', methods=['POST'])
@@ -454,18 +475,30 @@ def viewReportDate():
 
 # 9. VIEW EARNED REVENUE
 # /viewRevenue/2022-01-01/2023-01-01
-@app.route('/viewRevenue/date', methods=['POST'])
-def viewRevenue(): 
+@app.route('/viewRevenue/flight/date', methods=['POST'])
+def viewRevenueFlight(): 
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'POST':
         start = request.form["start"]
         end = request.form["end"]
         revenue = dbmanager.viewRevenue(start, end, session["username"])
-        session["revenue"] = revenue
+        session["flightRevenue"] = revenue
         print(revenue)
         return redirect(url_for("viewReports"))
     
+@app.route('/viewRevenue/purchase/date', methods=['POST'])
+def viewRevenuePurchase(): 
+    if not session.get("username"):
+        return None # todo render page with error
+    if request.method == 'POST':
+        start = request.form["start"]
+        end = request.form["end"]
+        revenue = dbmanager.viewRevenue2(start, end, session["username"])
+        session["purchaseRevenue"] = revenue
+        print(revenue)
+        return redirect(url_for("viewReports"))
+
 # 10. VIEW EARNED REVENUE BY TRAVEL CLASS 
 # /viewRevenueTravelClass/Economy
 @app.route('/viewRevenueTravelClass', methods=['GET'])
@@ -502,6 +535,7 @@ def home():
 @app.route('/staffHome')
 def staffHome():
     username = session['username']
+    name = session.get('name')
     airline = session["airline"]
     flights = session.get("flights")
     status = session.get("status")
@@ -509,11 +543,12 @@ def staffHome():
     mostFrequentFlyer = session.get("mostFrequentFlyer")
     customer_flights = session.get("customer_flights")
     returnFlights = session.get("returnFlights")
-    return render_template('staffHome.html', username=username, flights=flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights, returnFlights=returnFlights)
+    return render_template('staffHome.html', username=username, name=name, flights=flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights, returnFlights=returnFlights)
 
 @app.route('/customerHome')
 def customerHome():
     username = session.get('username')
+    name = session.get('name')
     flights = session.get("flights")
     returnFlights = session.get("returnFlights")
     flight_status = session.get("status")
@@ -522,7 +557,7 @@ def customerHome():
     myFlights = viewMyUpcomingFlights()
     mySpending = session.get("mySpending")
     print(f"{mySpending=}")
-    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights, mySpending=mySpending)
+    return render_template('customerHome.html', username=username, name=name, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights, mySpending=mySpending)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():

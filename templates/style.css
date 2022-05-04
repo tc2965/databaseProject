@@ -1,0 +1,25 @@
+
+h1, h3{
+    font-family: 'Playfair Display', serif;
+}
+
+table, th, td{
+    border: 1px solid black;
+}
+
+table {width:100%}
+.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+tr.pick_flight:hover { background-color : #FDF0D5; }
+.selected {
+    background-color: #89ae37;
+    color: #FFF;
+}
+.error {
+    font-weight: 700;
+    color: red;
+}
+.center {
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+}

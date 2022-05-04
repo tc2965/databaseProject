@@ -1,25 +1,63 @@
 <html>
 <head>
+	<link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 60%;
+			padding: 10px;
+		}
+	</style>
 </head>
-<body>
+<body class="center">
 <h1>Welcome {{username}}</h1>
 <a href="/customerHome"><button>Go back home</button></a>
 <style type="text/css">
 	table, th, td{
 		border: 1px solid black;
 	}
+	table {width:100%}
 	.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
 	tr.pick_flight:hover { background-color : #FDF0D5; }
 	.selected {
 		background-color: #89ae37;
 		color: #FFF;
 	}
+	.error {
+		font-weight: 700;
+		color: red;
+	}
+	.center {
+		margin: auto;
+		width: 60%;
+		padding: 10px;
+		}
 </style>
 {% if error %}
-<p>{{error}}</p>
+<p class="error">ERROR! {{error}}</p>
 {% endif %}
 {% if myFlights %}
-<p> Your flight History: </p>
+<h3> Your flight History: </h3>
 <table id ="table">
     <TR>
         <TD>Ticket ID</TD>
@@ -43,7 +81,7 @@
 <button onclick="commentFlight()">Rate Trip</button>
 {% endif %}
 
-<h2>Rate and Comment on a Flight</h2>
+<h3>Rate and Comment on a Flight</h3>
 <form action="/rate_and_comment" method="POST">
 	<input type="text" id = "rate_ticket_id" name = "ticket_id" placeholder="ticket_id" required/>
 	<input type="number" name = "rating" value="5" min="!" max="5" required/>
@@ -88,5 +126,10 @@
 		}
 		console.log(element)
     }
+
+	function showAlert(){
+		console.log(error);
+		alert(error);
+	}
 </script>
 </html>

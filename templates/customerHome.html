@@ -1,35 +1,56 @@
 <html>
 <head>
+	<link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 60%;
+			padding: 10px;
+		}
+	</style>
 </head>
-<body>
-<h1>Welcome {{username}}</h1>
-
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-	.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
-	tr.pick_flight:hover { background-color : #FDF0D5; }
-	.selected {
-		background-color: #89ae37;
-		color: #FFF;
-	}
-</style>
+<body class="center">
+<h1>Welcome {{name}}</h1>
+<p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
 {% if error %}
-<error>ERROR: {{error}}</error>
-{% endif %}{% if myFlights %}
+<p class="error"><strong>Error! </strong> {{error}}</p>
+{% endif %}
+
+{% if myFlights %}
 	<p> Your upcoming flights: </p>
-	<table >
+	<table>
 		<TR>
+			<TD>Ticket</TD>
 			<TD>airline_name</TD>
 			<TD>departure_date_time</TD>
 			<TD>flight_number</TD>
 		</TR>
 		{% for flight in myFlights %}
 		<TR>
+			<TD>{{flight.ticket_id}}</TD>
 			<TD>{{flight.airline_name}}</TD>
-		<TD>{{flight.departure_date_time}}</TD>
-		<TD>{{flight.flight_number}}</TD>
+			<TD>{{flight.departure_date_time}}</TD>
+			<TD>{{flight.flight_number}}</TD>
 		</TR>
 		{% endfor %}
 	</table>
@@ -72,7 +93,9 @@
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
 	<input type="text" name = "destination" placeholder="destination" required/>
-	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<label>Departure</label>
+	<input type="date" id="departure_date" name="departure_date"
+	   required>
 	<input type="submit" value = Submit />
 </form>
 
@@ -112,7 +135,9 @@
 <form id="return_form" action="/flight/search/return" method="POST">
 	<input id="return_form_source" type="text" name = "source" placeholder="source" required/>
 	<input id="return_form_destination" type="text" name = "destination" placeholder="destination" required/>
-	<input id="return_form_departure_date" type="text" name = "departure_date" placeholder="departure_date" required/>
+	<label>Departure</label>
+	<input id="return_form_departure_date" type="date" name="departure_date"
+	   required>
 	<input type="submit" value = Submit />
 </form>
 {% if returnFlights%}
@@ -201,7 +226,6 @@
 	<p>{{airline}} Flight#{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
 {% endif%}
 
-<a href="/logout"><button>Logout</button></a>
 </body>
 <script>
 	var table = document.getElementById('table');
@@ -260,10 +284,11 @@
 			var departure_date_time = element[0].children[5].firstChild.data
 			var source = element[0].children[6].firstChild.data
 			var destination = element[0].children[4].firstChild.data
+			console.log(departure_date_time.substring(0,10))
 			console.log(departure_date_time, source, destination)
 			document.getElementById("return_form_source").value =source;
 			document.getElementById("return_form_destination").value =destination;
-			document.getElementById("return_form_departure_date").value =departure_date_time;
+			document.getElementById("return_form_departure_date").valueAsDate = new Date(departure_date_time.substring(0,10));
 		}
 		console.log(element)
 	}

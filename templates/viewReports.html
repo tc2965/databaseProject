@@ -1,14 +1,58 @@
 <html>
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 60%;
+			padding: 10px;
+		}
+	</style>
 </head>
-<body>
-<style type="text/css">
-	table, th, td{
-		border: 1px solid black;
-	}
-</style>
-<p>View reports and revenue for Airline {{airline}} </p>
+<body class="center">
+<h1>View reports and revenue for Airline {{airline}} </h1>
 <a href="/staffHome"><button>Go back home</button></a>
+
+
+<a href="/viewRevenueTravelClass"><button>Refresh Revenue by Travel Class</button></a>
+{% if travel_class_revenue %}
+<table>
+    <TR>
+        <TD>Travel class</TD>
+        <TD>Base Cost</TD>
+        <TD>Sold Price</TD>
+        <TD>Revenue</TD>
+    </TR>
+    {% for revenue in travel_class_revenue %}
+    <TR>
+        <TD>{{revenue.travel_class}}</TD>
+        <TD>{{revenue.base_cost}}</TD>
+        <TD>{{revenue.sold_price}}</TD>
+        <TD>{{revenue.revenue}}</TD>
+    </TR>
+    {% endfor %}
+</table>
+{% endif %}
 
 <p>Search for flight reports within a period</p> 
 <form action="/viewReport/date" method="POST">
@@ -31,33 +75,13 @@
     </table>
 {% endif %}
 
-<a href="/viewRevenueTravelClass"><button>Refresh Revenue by Travel Class</button></a>
-{% if travel_class_revenue %}
-<table>
-    <TR>
-        <TD>Travel class</TD>
-        <TD>Base Cost</TD>
-        <TD>Sold Price</TD>
-        <TD>Revenue</TD>
-    </TR>
-    {% for revenue in travel_class_revenue %}
-    <TR>
-        <TD>{{revenue.travel_class}}</TD>
-        <TD>{{revenue.base_cost}}</TD>
-        <TD>{{revenue.sold_price}}</TD>
-        <TD>{{revenue.revenue}}</TD>
-    </TR>
-    {% endfor %}
-</table>
-{% endif %}
-
-<p>View revenue within a period </p> 
-<form action="/viewRevenue/date" method="POST">
+<p>View revenue within a flight period </p> 
+<form action="/viewRevenue/flight/date" method="POST">
 	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
 	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
 	<input type="submit" value = Submit />
 </form>
-{% if revenue%}
+{% if flightRevenue%}
 <table>
     <TR>
         <TD>Airline</TD>
@@ -68,12 +92,39 @@
         <TD>Revenue</TD>
     </TR>
     <TR>
-        <TD>{{revenue.airline}}</TD>
-        <TD>{{revenue.period_start}}</TD>
-        <TD>{{revenue.period_end}}</TD>
-        <TD>{{revenue.totalbaseprice}}</TD>
-        <TD>{{revenue.totalsoldprice}}</TD>
-        <TD>{{revenue.revenue}}</TD>
+        <TD>{{flightRevenue.airline}}</TD>
+        <TD>{{flightRevenue.period_start}}</TD>
+        <TD>{{flightRevenue.period_end}}</TD>
+        <TD>{{flightRevenue.totalbaseprice}}</TD>
+        <TD>{{flightRevenue.totalsoldprice}}</TD>
+        <TD>{{flightRevenue.revenue}}</TD>
+    </TR>
+</table>
+{% endif%}
+
+<p>View revenue within a purchase period </p> 
+<form action="/viewRevenue/purchase/date" method="POST">
+	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
+	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if purchaseRevenue%}
+<table>
+    <TR>
+        <TD>Airline</TD>
+        <TD>Period Start</TD>
+        <TD>Period End</TD>
+        <TD>Total Base Price</TD>
+        <TD>Total Sold Price</TD>
+        <TD>Revenue</TD>
+    </TR>
+    <TR>
+        <TD>{{purchaseRevenue.airline}}</TD>
+        <TD>{{purchaseRevenue.period_start}}</TD>
+        <TD>{{purchaseRevenue.period_end}}</TD>
+        <TD>{{purchaseRevenue.totalbaseprice}}</TD>
+        <TD>{{purchaseRevenue.totalsoldprice}}</TD>
+        <TD>{{purchaseRevenue.revenue}}</TD>
     </TR>
 </table>
 {% endif%}

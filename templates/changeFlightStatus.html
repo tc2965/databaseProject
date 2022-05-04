@@ -1,5 +1,5 @@
 <p>This is the form for changing a flight's status<p>
-
+<a href="/staffHome"><button>Go back home</button></a>
 <form action="/flight_status" method="POST">
     <select name="status">
 		<option value ="On Time">On Time</option>
@@ -8,6 +8,7 @@
     </br>
     <input type="text" name = "flight_number" placeholder="flight_number" required/></br>
     <input type="text" name = "departure_date_time" placeholder="departure_date_time" required/></br>
+    <input type="text" name = "airline_name" placeholder="airline_name" required/></br>
     <input type="submit" value = Submit />
     {% if error %}
         <p class="error"><strong>Error:</strong> {{error}}</p>

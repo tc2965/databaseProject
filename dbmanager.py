@@ -53,8 +53,9 @@ def executeCommitQuery(query, params=None):
         cursor = conn.cursor()
         cursor.execute(query, params)
         conn.commit()
+        rows = cursor.rowcount
         cursor.close()
-        return True
+        return rows
     except Exception as e:
         print(e)
         print(query)
@@ -132,7 +133,7 @@ def searchFlights(source, destination, departure_date):
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
     if arrival: 
-        query = "SELECT status FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
         params = (airline, flight_number, departure, arrival)
     else:
         query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
@@ -222,12 +223,14 @@ def createTickets(ticketsToCreate):
     return success
 
 # 3. CHANGE FLIGHT STATUS
-def changeFlightStatus(status, flight_number, departure_date_time, username): 
-    staff = checkUserExistsInDb("airline_staff", username)
+def changeFlightStatus(status, flight_number, departure_date_time, airline, username): 
+    staff = assertStaffPermission(username, airline)
     airline = staff["airline_name"]
     updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time = %s AND airline_name = %s"
     params = (status, flight_number, departure_date_time, airline)
-    executeCommitQuery(updateFlightStatus, params)
+    success = executeCommitQuery(updateFlightStatus, params)
+    if success == 0:
+        return f"Changing flight #{flight_number} unsuccessful"
     return f"Changing flight #{flight_number} successful"
 
 # 4. ADD AIRPLANE 
@@ -235,16 +238,20 @@ def addAirplane(airplane, username):
     staff = assertStaffPermission(username, airplane["airline_name"])
     insertAirplane = "INSERT INTO airplane VALUES (%(ID)s, %(airline_name)s, %(number_of_seats)s, %(manufacturer)s, %(age)s)"
     params = airplane
-    executeCommitQuery(insertAirplane, params)
+    success = executeCommitQuery(insertAirplane, params)
     id = airplane["ID"]
+    if success == 0:
+        return f"Adding airplane #{id} unsuccessful"
     return f"Adding airplane {id} successful"
 
 # 5. ADD AIRPORT
 def addAirport(airport):
     insertAirport = "INSERT INTO airport VALUES (%(airport_code)s, %(name)s, %(city)s, %(country)s, %(type)s)"
     params = airport
-    executeCommitQuery(insertAirport, params)
+    success = executeCommitQuery(insertAirport, params)
     code = airport["airport_code"]
+    if success == 0:
+        return f"Adding airport #{code} unsuccessful"
     return f"Adding airport {code} successful"
 
 # 6. VIEW FLIGHT RATINGS 
@@ -300,28 +307,78 @@ def viewRevenue(start, end, username):
     # create connection and grab airline
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    
+
+    # PDF doesn't say whether to use the departure date or purchase date for the period
     totalBasePriceQuery = "SELECT SUM(base_price) as totalbaseprice FROM (flight NATURAL JOIN ticket) WHERE airline_name = %s AND (departure_date_time BETWEEN %s AND %s)"
     params = (airline, start, end)
-    totalBasePrice = executeQuery(totalBasePriceQuery, params, True)["totalbaseprice"]
+    total_base = executeQuery(totalBasePriceQuery, params, True)["totalbaseprice"]
     
     totalSoldPriceQuery = "SELECT SUM(sold_price) as totalsoldprice FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (date_time BETWEEN %s AND %s)"
-    totalSoldPrice = executeQuery(totalSoldPriceQuery, params, True)["totalsoldprice"]
+    total_sold = executeQuery(totalSoldPriceQuery, params, True)["totalsoldprice"]
     
-    revenue = totalSoldPrice - totalBasePrice
-    data = {"totalbaseprice": totalBasePrice,
-            "totalsoldprice": totalSoldPrice, 
+    if total_sold:
+        total_sold = total_sold
+    else:
+        total_sold = 0
+
+    if total_base:
+        total_base = total_base
+    else:
+        total_base = 0
+    
+    revenue = total_sold - total_base
+    data = {"totalbaseprice": total_base,
+            "totalsoldprice": total_sold, 
             "revenue": revenue, 
             "airline": airline, 
             "period_start": start,
             "period_end": end}
     return data
 
+def viewRevenue2(start, end, username):
+    staff = checkUserExistsInDb("airline_staff", username)
+    airline = staff["airline_name"]
+    
+    # This uses the purchase date for the period
+    createRevenueView = "CREATE VIEW revenue AS SELECT sold_price, base_price, date_time, flight.flight_number, flight.airline_name, flight.departure_date_time FROM flight INNER JOIN ticket ON flight.flight_number = ticket.flight_number AND flight.airline_name = %s AND flight.departure_date_time = ticket.departure_date_time INNER JOIN purchases ON ticket.ID = purchases.ticket_id WHERE (date_time BETWEEN %s AND %s)"
+    params = (airline, start, end)
+    
+    executeQuery(createRevenueView, params)
+
+    sold_price = "SELECT SUM(sold_price) as sold_price FROM revenue;"
+    base_price = "SELECT SUM(base_price) as base_price FROM revenue;"
+    total_sold = executeQuery(sold_price, None, True)["sold_price"]
+    total_base = executeQuery(base_price, None, True)["base_price"]
+    if total_sold:
+        total_sold = total_sold
+    else:
+        total_sold = 0
+
+    if total_base:
+        total_base = total_base
+    else:
+        total_base = 0
+
+    dropRevenueView = "DROP VIEW revenue;"
+    executeQuery(dropRevenueView)
+    
+    data = {"totalbaseprice": total_base,
+            "totalsoldprice": total_sold, 
+            "revenue": total_sold - total_base, 
+            "airline": airline, 
+            "period_start": start,
+            "period_end": end}
+    
+    return data
+
+
 # 10. VIEW REVENUE TRAVEL CLASS  
 def viewRevenueTravelClass(username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
 
+    # this is assuming that the base_price of a flight is how much it costs to 
+    # fly 1 customer regardless of what travel class they have
     createBaseView = "CREATE VIEW base_travel AS SELECT travel_class, SUM(base_price) as base_cost FROM ticket INNER JOIN flight ON ticket.flight_number = flight.flight_number AND ticket.departure_date_time = flight.departure_date_time AND ticket.airline_name = %s GROUP BY travel_class;"
     params = airline    
     executeQuery(createBaseView, params)
