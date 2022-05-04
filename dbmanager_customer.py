@@ -107,7 +107,7 @@ def viewMyFlights(email):
     if (exists):
         today = date.today()
         today = today.strftime("%Y-%m-%d")
-        cursor.execute("SELECT purchases.ticket_id as ticket_id, flight_number, departure_date_time, airline_name FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND customer_email = %s;", email)
+        cursor.execute("SELECT purchases.ticket_id as ticket_id, flight_number, departure_date_time, airline_name, rating, comment FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id AND purchases.customer_email = %s LEFT JOIN ratings ON purchases.ticket_id = ratings.ticket_id;", (email))
         conn.commit()
         flights = cursor.fetchall()
         cursor.close()
@@ -385,28 +385,40 @@ def trackSpending(email, start_date=None, end_date=None):
             cursor.execute("SELECT sum(sold_price) FROM purchases WHERE customer_email = %s AND date_time >= %s", (email, one_year_ago))
             tot_spend = float(cursor.fetchall()[0]["sum(sold_price)"]) # total spend within the past year # not sure whether I should convert it to float
 
-            cursor.execute("""SELECT YEAR(date_time), MONTH(date_time), sum(sold_price) FROM purchases
+            cursor.execute("""SELECT YEAR(date_time) as year, MONTH(date_time) as month, sum(sold_price) as total FROM purchases
             WHERE customer_email = %s AND date_time >= %s
             GROUP BY YEAR(date_time), MONTH(date_time)""", (email, first_day_of_next_month))
             month_wise_spending = cursor.fetchall() # I left the raw dictionary here, not sure whether further processing is needed
 
             cursor.close()
-            return tot_spend, month_wise_spending
+            start = one_year_ago.strftime("%Y-%m-%d")
+            end = now.strftime("%Y-%m-%d")
+            # return tot_spend, month_wise_spending
         else:
             # if the input format of the date is like "04/30/2022", we need these two lines
-            start_date = (datetime.strptime(start_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
-            end_date = (datetime.strptime(end_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            # start_date = (datetime.strptime(start_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            # end_date = (datetime.strptime(end_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
 
             cursor.execute("SELECT sum(sold_price) FROM purchases WHERE customer_email = %s AND date_time >= %s AND date_time <= %s", (email, start_date, end_date))
-            tot_spend = float(cursor.fetchall()[0]["sum(sold_price)"]) # total spend within the past year # not sure whether I should convert it to float
+            spent = cursor.fetchone().get("sum(sold_price)", None)
+            if not spent:
+                return {"error": "You didn't spend anything"}
+            print(f"{spent=}")
+            tot_spend = float(spent) # total spend within the past year # not sure whether I should convert it to float
 
-            cursor.execute("""SELECT YEAR(date_time), MONTH(date_time), sum(sold_price) FROM purchases
+            cursor.execute("""SELECT YEAR(date_time) as year, MONTH(date_time) as month, sum(sold_price) as total FROM purchases
             WHERE customer_email = %s AND date_time >= %s AND date_time <= %s
             GROUP BY YEAR(date_time), MONTH(date_time)""", (email, start_date, end_date))
             month_wise_spending = cursor.fetchall()
 
-            cursor.close()
-            return tot_spend, month_wise_spending
+            cursor.close()            
+            # return tot_spend, month_wise_spending
+        return {
+            "total_spent": tot_spend, 
+            "start": start, 
+            "end": end,
+            "monthly": month_wise_spending
+        }
     else:
         cursor.close()
         return False

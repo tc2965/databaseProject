@@ -15,27 +15,58 @@
 		color: #FFF;
 	}
 </style>
-
-{% if myFlights %}
-<p> Your upcoming flights: </p>
-<table >
-	<TR>
-		<TD>airline_name</TD>
-		<TD>departure_date_time</TD>
-		<TD>flight_number</TD>
-	</TR>
-	{% for flight in myFlights %}
-	<TR>
-		<TD>{{flight.airline_name}}</TD>
-	   <TD>{{flight.departure_date_time}}</TD>
-	   <TD>{{flight.flight_number}}</TD>
-	</TR>
-	{% endfor %}
-</table>
+{% if error %}
+<error>ERROR: {{error}}</error>
+{% endif %}{% if myFlights %}
+	<p> Your upcoming flights: </p>
+	<table >
+		<TR>
+			<TD>airline_name</TD>
+			<TD>departure_date_time</TD>
+			<TD>flight_number</TD>
+		</TR>
+		{% for flight in myFlights %}
+		<TR>
+			<TD>{{flight.airline_name}}</TD>
+		<TD>{{flight.departure_date_time}}</TD>
+		<TD>{{flight.flight_number}}</TD>
+		</TR>
+		{% endfor %}
+	</table>
 {% else %}
-<p> You have no flights </p>
+	<p> You have no flights </p>
 {% endif %}
 <a href="/manageFlights"><button>Manage Flights</button></a>
+
+
+<a href="/track_my_spending/default"><button>Generate Spending History</button></a>
+<p>Get Spending History Within a Period</p>
+<form action="/track_my_spending" method="POST">
+	<input type="date" id="start" name="start"
+	   required>
+	   <input type="date" id="end" name="end"
+	   required>
+	<input type="submit" value = Submit />
+</form>
+
+{% if mySpending %}
+	<p> Between {{mySpending.start}} and {{mySpending.end}} </p>
+	<p> Total spent: {{mySpending.total_spent}}</p>
+	<table>
+		<TR>
+			<TD>Year</TD>
+			<TD>Month</TD>
+			<TD>Total</TD>
+		</TR>
+		{% for month in mySpending.monthly%}
+			<TR>
+				<TD>{{month.year}}</TD>
+				<TD>{{month.month}}</TD>
+				<TD>{{month.total}}</TD>
+			</TR>
+		{% endfor %}
+	</table>
+{% endif %}
 
 <h2>Search for flights</h2>
 <form action="/flight/search/" method="POST">
@@ -44,9 +75,9 @@
 	<input type="text" name = "departure_date" placeholder="departure_date" required/>
 	<input type="submit" value = Submit />
 </form>
+
 {% if flights%}
 <p>View Flights</p>
-
 <table id="table">
 	<TR>
 		<TD>flight_number</TD>
@@ -151,13 +182,12 @@
 	</select>
 	<input type="submit" value = Submit />
 </form>
+{% endif %}
+
 {% if purchaseStatus %}
 <p>{{purchaseStatus}}</p>
 {% endif %}
-{% if error %}
-<p>{{error}}</p>
-{% endif %}
-{% endif %}
+
 
 <p>Search for a flight's status</p> 
 <form action="/flight_status/view/" method="POST">

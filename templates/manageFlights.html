@@ -3,6 +3,7 @@
 </head>
 <body>
 <h1>Welcome {{username}}</h1>
+<a href="/customerHome"><button>Go back home</button></a>
 <style type="text/css">
 	table, th, td{
 		border: 1px solid black;
@@ -25,6 +26,8 @@
         <TD>airline_name</TD>
         <TD>departure_date_time</TD>
         <TD>flight_number</TD>
+        <TD>rating</TD>
+        <TD>comment</TD>
     </TR>
     {% for flight in myFlights %}
     <TR class="pick_flight">
@@ -32,6 +35,8 @@
         <TD>{{flight.airline_name}}</TD>
         <TD>{{flight.departure_date_time}}</TD>
         <TD>{{flight.flight_number}}</TD>
+        <TD>{{flight.rating}}</TD>
+        <TD>{{flight.comment}}</TD>
     </TR>
     {% endfor %}
 </table>

@@ -210,18 +210,14 @@ def purchaseTickets():
     purchase = purchase_parser.parse_args()
     purchase["customer_email"] = session.get("username")
     success = dbmanager_customer.purchaseTicketsDict(purchase)
-    error_messages = []
     purchased = []
     for tickets in success:
-        error = tickets.get("error")
         success = tickets.get("success")
-        if error:
-            error_messages.append(error)
-        elif success: 
+        if success:
             purchased.append(success)
         else: 
-            error_messages.append("Error purchasing, please try again later")
-    session["error"] = error_messages
+            error = tickets.get("error", "Error handling ticket purchase. Please try again later")
+    session["error"] = error
     if purchased:
         session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
     return redirect(url_for("customerHome"))
@@ -266,14 +262,22 @@ def trackMySpendingDefault():
     if not session.get("username"):
             return None # todo render page with error 
     if request.method == 'GET':
-        return dbmanager_customer.trackSpending(session["username"])
+        mySpending = dbmanager_customer.trackSpending(session["username"])
+        session["error"] = mySpending.get("error", None)
+        session["mySpending"] = mySpending
+        return redirect(url_for("customerHome"))
 
-@app.route('/track_my_spending/<start>/<end>', methods=['GET'])
-def trackMySpending(start, end):
+@app.route('/track_my_spending', methods=['POST'])
+def trackMySpending():
     if not session.get("username"):
-            return None # todo render page with error 
-    if request.method == 'GET':
-        return dbmanager_customer.trackSpending(session["username"], start, end)
+        return None # todo render page with error 
+    if request.method == 'POST':
+        start = request.form["start"]
+        end = request.form["end"]
+        mySpending = dbmanager_customer.trackSpending(session["username"], start, end)
+        session["error"] = mySpending.get("error", None)
+        session["mySpending"] = mySpending
+        return redirect(url_for("customerHome"))
 
 # AIRLINE STAFF USE CASES
 # 1. VIEW FUTURE FLIGHTS BY RANGE OF DATES
@@ -516,7 +520,9 @@ def customerHome():
     purchaseStatus = session.get("purchaseStatus")
     error = session.get("error")
     myFlights = viewMyUpcomingFlights()
-    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights)
+    mySpending = session.get("mySpending")
+    print(f"{mySpending=}")
+    return render_template('customerHome.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights, mySpending=mySpending)
 		
 @app.route('/post', methods=['GET', 'POST'])
 def post():
