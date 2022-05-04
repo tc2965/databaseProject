@@ -173,15 +173,17 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
     return {"data" : flights}
 
 # 2. CREATE NEW FLIGHTS 
-def createFlight(flight): 
+def createFlight(flight, username): 
+    staff = assertStaffPermission(username, flight["airline_name"])
     query = "INSERT INTO flight VALUES (%(flight_number)s, %(airplane_id)s, %(departure_date_time)s, %(departure_airport_code)s, %(arrival_date_time)s, %(arrival_airport_code)s, %(base_price)s, %(status)s, %(airline_name)s)"
     params = flight
     success = executeCommitQuery(query, params)
     number = flight["flight_number"]
     return f"Creating flight {number} successful" if success else success
 
-def createTickets(ticketsToCreate): 
+def createTickets(ticketsToCreate, username): 
     print(ticketsToCreate)
+    staff = assertStaffPermission(username, ticketsToCreate["airline_name"])
     economy_seats = ticketsToCreate["economy_seats"]
     business_seats = ticketsToCreate["business_seats"]
     first_seats = ticketsToCreate["first_seats"]
@@ -280,7 +282,7 @@ def viewFlightRatings(flight_number, username):
 def viewMostFrequentCustomer(username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    query = "SELECT customer_email, COUNT(ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
+    query = "SELECT customer_email, COUNT(DISTINCT ticket_id) as trips FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY customer_email ORDER BY trips DESC LIMIT 1"
     mostFrequentFlyer = executeQuery(query, airline, True)
     print(mostFrequentFlyer)
     return mostFrequentFlyer
@@ -297,7 +299,7 @@ def viewCustomerFlights(customer_email, username):
 def viewReportDate(start, end, username):
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
-    query = "SELECT flight_number, COUNT(ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = %s AND date_time BETWEEN %s AND %s GROUP BY flight_number;" 
+    query = "SELECT flight_number, COUNT(DISTINCT ticket_id) AS tickets_sold FROM purchases JOIN ticket ON purchases.ticket_id = ticket.ID WHERE airline_name = %s AND date_time BETWEEN %s AND %s GROUP BY flight_number;" 
     params = (airline, start, end)
     numTicket = executeQuery(query, params)
     return numTicket
@@ -313,7 +315,7 @@ def viewRevenue(start, end, username):
     params = (airline, start, end)
     total_base = executeQuery(totalBasePriceQuery, params, True)["totalbaseprice"]
     
-    totalSoldPriceQuery = "SELECT SUM(sold_price) as totalsoldprice FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (date_time BETWEEN %s AND %s)"
+    totalSoldPriceQuery = "SELECT SUM(sold_price) as totalsoldprice FROM ticket RIGHT JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s AND (departure_date_time BETWEEN %s AND %s)"
     total_sold = executeQuery(totalSoldPriceQuery, params, True)["totalsoldprice"]
     
     if total_sold:
@@ -383,7 +385,7 @@ def viewRevenueTravelClass(username):
     params = airline    
     executeQuery(createBaseView, params)
     
-    createSoldView = "CREATE VIEW sold_travel AS SELECT travel_class, SUM(sold_price) as sold_price FROM ticket JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class;"
+    createSoldView = "CREATE VIEW sold_travel AS SELECT travel_class, SUM(sold_price) as sold_price FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id WHERE airline_name = %s GROUP BY travel_class;"
     executeQuery(createSoldView, params)
     
     revenueQuery = "SELECT sold_travel.travel_class as travel_class, base_cost, sold_price, (sold_price - base_cost) AS revenue FROM base_travel INNER JOIN sold_travel ON base_travel.travel_class = sold_travel.travel_class;"

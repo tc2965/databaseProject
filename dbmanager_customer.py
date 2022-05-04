@@ -34,46 +34,6 @@ def checkUserExistsInDb(typeUser, field, username, cursor):
 	#use fetchall() if you are expecting more than 1 data row
     return data
 
-def checkUserLogin(typeUser, username, password):
-
-    conn = createConnection()
-    cursor = conn.cursor()
-    # incoming pass must be hashed to check
-    # stored pass can't be decrypted (md5 is one way hash)
-    password = hashlib.md5(password.encode()).hexdigest()
-    if typeUser == "customer":
-        # customers don't use username
-        query = "SELECT * FROM %s WHERE email = '%s' AND password = '%s'" % (typeUser, username, password)
-    elif typeUser == "airline_staff":
-        query = "SELECT * FROM %s WHERE username = '%s' AND password = '%s'" % (typeUser, username, password)
-    cursor.execute(query)
-    data = cursor.fetchone()
-    cursor.close()
-    return data
-
-def registerCustomer(customer):
-    """
-    dict[email, name, ...]
-    """
-    conn = createConnection()
-    cursor = conn.cursor()
-    exists = checkUserExistsInDb("customer", "email", customer["email"], cursor)
-    if (exists):
-        cursor.close()
-        return False
-    else:
-        password = customer["password"]
-        customer["password"] = hashlib.md5(password.encode()).hexdigest()
-
-        # todo - I'm pretty sure there's a better way of writing this
-        # Tried it another way with string concatenation but it felt dumb
-        insertCustomer = f"INSERT INTO customer VALUES ('%(email)s', '%(name)s', '%(password)s', '%(building_number)s', '%(street)s', '%(city)s', '%(state)s', '%(phone_number)s', '%(passport_number)s', '%(passport_expiration)s', '%(passport_country)s', '%(date_of_birth)s' )" % customer
-        print("insertCustomer:", insertCustomer)
-        cursor.execute(insertCustomer)
-        conn.commit()
-        cursor.close()
-        return customer["email"]
-
 def searchFlights(source, destination, departure_date):
     conn = createConnection()
     cursor = conn.cursor()

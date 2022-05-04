@@ -346,7 +346,7 @@ def flights():
         return createFlight("Login first")
     if request.method == 'POST':
         flight = flight_parser.parse_args()
-        success = dbmanager.createFlight(flight)
+        success = dbmanager.createFlight(flight, session["username"])
         session["createdFlight"] = success
         return redirect(url_for("createFlight"))
 
@@ -357,7 +357,7 @@ def createTickets():
     if request.method == 'POST':
         print(request.form)
         ticketsToCreate = create_tickets_parser.parse_args()
-        success = dbmanager.createTickets(ticketsToCreate)
+        success = dbmanager.createTickets(ticketsToCreate, session["username"])
         if success:
             createdTickets = "Success creating tickets for purchase"
             session["createdTickets"] = createdTickets
