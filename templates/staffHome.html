@@ -38,7 +38,7 @@
 <p>Current Most Frequent Flyer is {{mostFrequentFlyer.customer_email}} with {{mostFrequentFlyer.trips}} trips</p>
 {% endif %}
 
-<h4>Lookup a customer's flight</h4>
+<h4>Lookup a customer's flight with {{airline}}</h4>
 <form action="/view_customer_flights" method="POST">
 	<input type="text" name = "customer_email" placeholder="customer_email" required/>
 	<input type="submit" value = Submit />
@@ -61,7 +61,7 @@
 {% endif%}
 
 
-<h4>Search for flights</h4>
+<h4>Search for {{airline}} flights</h4>
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
 	<input type="text" name = "destination" placeholder="destination" required/>
@@ -69,7 +69,7 @@
 	<input type="submit" value = Submit />
 </form>
 
-<h4>Search for a flight's status</h4> 
+<h4>Search for a {{airline}} flight's status</h4> 
 <form action="/flight_status/view/" method="POST">
 	<input type="text" name = "airline" placeholder="airline" required/>
 	<input type="text" name = "flight_number" placeholder="flight_number" required/>
@@ -81,7 +81,7 @@
 	<p>{{airline}} Flight #{{flight_status.flight_number}} is {{flight_status.status}} for departure at {{flight_status.departure_date_time}}</p>
 {% endif%}
 
-<h4>Search for a flight's ratings and comments</h4> 
+<h4>Search for a {{airline}} flight's ratings and comments</h4> 
 <form action="/view_flight_ratings/" method="POST">
 	<input type="text" name = "flight_number" placeholder="flight_number" required/>
 	<input type="submit" value = Submit />
@@ -111,14 +111,14 @@
 {% endif%}
 
 
-<h4>Search for flights within a period</h4> 
+<h4>Search for {{airline}} flights within a period</h4> 
 <form action="/view_flights/time" method="POST">
 	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
 	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
 	<input type="submit" value = Submit />
 </form>
 
-<h4>Search for flights by airports</h4> 
+<h4>Search for {{airline}} flights by airports</h4> 
 <form action="/view_flights/airport" method="POST">
 	<select name="type">
 		<option value ="source">from</option>
