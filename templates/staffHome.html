@@ -2,22 +2,13 @@
 <head>
 </head>
 <body>
-<form action="/post" method="POST">
-	<h1>Welcome {{username}}</h1>
-	<input type="text" name = "blog" placeholder="post" required/> </br>
-	<input type="submit" value = Post />
-</form>
+<h1>Welcome {{username}}</h1>
 
 <style type="text/css">
 	table, th, td{
 		border: 1px solid black;
 	}
-	td {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
-	tr:hover { background-color : #89ae37; }
-	.selected {
-		background-color: brown;
-		color: #FFF;
-	}
+	td{padding: 5px;}
 </style>
 
 <a href="/view_most_frequent_customer"><button>Refresh Most Frequent Flyer</button></a>
@@ -74,6 +65,7 @@
 	<input type="submit" value = Submit />
 </form>
 {% if ratings%}
+<p>Average for flight {{ratings.flight_number}} is {{ratings.average}}
 <table>
 <TR>
 	<TD>airline_name</TD>
@@ -84,7 +76,7 @@
 	<TD>comment</TD>
 </TR>
 <TR>
-{% for flight in ratings %}
+{% for flight in ratings.ratings %}
 <TD>{{flight.airline_name}}</TD>
 <TD>{{flight.flight_number}}</TD>
 <TD>{{flight.departure_date_time}}</TD>
@@ -153,18 +145,6 @@
 
 <br>
 <a href="/logout"><button>Logout</button></a>
-
-<script>
-	$("#table tr").click(function(){
-		$(this).addClass('selected').siblings().removeClass('selected');    
-		var value=$(this).find('td:first').html();
-		alert(value);    
-	 });
-	 
-	 $('.ok').on('click', function(e){
-		 alert($("#table tr.selected td:first").html());
-	 });
-</script>
 </body>
 </html>
 

@@ -258,7 +258,16 @@ def viewFlightRatings(flight_number, username):
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
     params = flight_number
     ratings = executeQuery(query, params)
-    return ratings
+    
+    averageQuery = "SELECT flight_number, AVG(rating) as avg FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s GROUP BY flight_number"
+    average = executeQuery(averageQuery, params, True)
+    print(f"{average=}")
+    ratingReport = {
+        "average": average["avg"], 
+        "flight_number": average["flight_number"], 
+        "ratings": ratings
+    }
+    return ratingReport
 
 # 7. VIEW MOST FREQUENT CUSTOMER
 def viewMostFrequentCustomer(username):

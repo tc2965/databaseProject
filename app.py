@@ -217,7 +217,7 @@ def purchaseTickets():
             purchased.append(success)
         else: 
             error = tickets.get("error", "Error handling ticket purchase. Please try again later")
-    session["error"] = error
+            session["error"] = error
     if purchased:
         session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
     return redirect(url_for("customerHome"))
@@ -547,4 +547,4 @@ app.secret_key = 'some key that you will never guess'
 #debug = True -> you don't have to restart flask
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == "__main__":
-	app.run('127.0.0.1', 5000, debug = True)
+    app.run('127.0.0.1', 5000, debug = True)
