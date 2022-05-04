@@ -14,13 +14,15 @@ app = Flask(__name__)
 
 load_dotenv()
 host = os.environ.get("HOST")
+port = os.environ.get("PORT")
 user = os.environ.get("USER")
 password = os.environ.get("PASSWORD")
 db = os.environ.get("DB")
-print(host, user, password, db)
+print(host, port, user, password, db)
 
 #Configure MySQL
 conn = pymysql.connect(host=host,
+		       port=port,
                        user=user,
                        password=password,
                        db=db,
