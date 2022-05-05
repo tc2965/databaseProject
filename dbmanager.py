@@ -219,7 +219,7 @@ def searchFlights(source, destination, departure_date, return_date=None):
             end = datetime.strptime(departure_date,"%Y-%m-%d") + relativedelta(days=1)
         print(start, end)
         cursor.execute("""SELECT * FROM flight
-        WHERE departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s)""", (departure_airport_code, arrival_airport_code, start, end))
+        WHERE departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s)""", (departure_airport_code, arrival_airport_code, start, end))
     else:
         try:
             start1 = (datetime.strptime(departure_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
@@ -234,9 +234,58 @@ def searchFlights(source, destination, departure_date, return_date=None):
 
         print(start1, end1, start2, end2)
         cursor.execute("""SELECT * FROM flight
-        WHERE (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s))
-        OR (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s))""",
+        WHERE (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s))
+        OR (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s))""",
         (departure_airport_code, arrival_airport_code, start1, end1, arrival_airport_code, departure_airport_code, start2, end2))
+    matchingFlights = cursor.fetchall()
+    cursor.close()
+    if not matchingFlights:
+        return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
+    return {"data": matchingFlights}
+
+def searchFlightsStaff(source, destination, departure_date, airline, return_date=None):
+    print(source, destination, departure_date, type(return_date), airline)
+    conn = createConnection()
+    cursor = conn.cursor()
+
+    # convert code/city to code
+    cursor.execute("SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s", (source, source))
+    departure_airport_code = cursor.fetchone()
+    cursor.execute("SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s", (destination, destination))
+    arrival_airport_code = cursor.fetchone()
+
+    if not departure_airport_code and not arrival_airport_code:
+        return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
+
+    departure_airport_code = departure_airport_code["airport_code"]
+    arrival_airport_code = arrival_airport_code["airport_code"]
+    if return_date == None:
+        try:
+            start = (datetime.strptime(departure_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end = (datetime.strptime(departure_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        except:
+            start = departure_date
+            end = datetime.strptime(departure_date,"%Y-%m-%d") + relativedelta(days=1)
+        print(start, end)
+        cursor.execute("""SELECT * FROM flight
+        WHERE departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s AND airline_name = %s)""", (departure_airport_code, arrival_airport_code, start, end, airline))
+    else:
+        try:
+            start1 = (datetime.strptime(departure_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end1 = (datetime.strptime(departure_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+            start2 = (datetime.strptime(return_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end2 = (datetime.strptime(return_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        except:
+            start1 = departure_date
+            start2 = return_date
+            end1 = datetime.strptime(departure_date,"%Y-%m-%d") + relativedelta(days=1)
+            end2 = datetime.strptime(return_date,"%Y-%m-%d") + relativedelta(days=1)
+
+        print(start1, end1, start2, end2)
+        cursor.execute("""SELECT * FROM flight
+        WHERE airline_name = %s (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s))
+        OR (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time >= %s AND departure_date_time <= %s))""",
+        (airline, departure_airport_code, arrival_airport_code, start1, end1, arrival_airport_code, departure_airport_code, start2, end2))
     matchingFlights = cursor.fetchall()
     cursor.close()
     if not matchingFlights:
