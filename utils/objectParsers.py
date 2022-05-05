@@ -31,12 +31,6 @@ airport_parser.add_argument("country", type=str, location='form')
 airport_parser.add_argument("type", type=str, location='form')
 
 preview_purchase_parser = reqparse.RequestParser()
-preview_purchase_parser.add_argument("customer_email", type=str, location='form')
-preview_purchase_parser.add_argument("card_type", type=str, location='form')
-preview_purchase_parser.add_argument("card_number", type=str, location='form')
-preview_purchase_parser.add_argument("name_on_card", type=str, location='form')
-preview_purchase_parser.add_argument("card_expiration", type=str, location='form')
-
 preview_purchase_parser.add_argument("flight_number", type=str, location='form')
 preview_purchase_parser.add_argument("departure_date_time", type=str, location='form')
 preview_purchase_parser.add_argument("airline_name", type=str, location='form')

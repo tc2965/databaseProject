@@ -216,6 +216,8 @@ def viewMyUpcomingFlights():
 # 3. PURCHASE TICKETS
 @app.route('/purchase_tickets_preview', methods=['POST'])
 def purchaseTicketsPreview():
+    session.pop("error", None)
+    session.pop("purchaseStatus", None)
     purchase_preview = preview_purchase_parser.parse_args()
     source_airline = purchase_preview["airline_name"]
     source_flight = purchase_preview["flight_number"]
@@ -262,7 +264,6 @@ def purchaseTickets():
     success = dbmanager_customer.purchaseTicketsDict(purchase, sold_price, sold_price_return)
     purchased = []
     for tickets in success:
-        print(f"{tickets=}")
         status = tickets.get("success")
         if status:
             purchased.append(status)
@@ -270,7 +271,6 @@ def purchaseTickets():
             error = tickets.get("error", "Error handling ticket purchase. Please try again later")
             session.pop("purchaseStatus", None)
             session["error"] = error
-        print(f"{purchased=}")
 
     if purchased:
         session.pop("error", None)

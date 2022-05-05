@@ -35,17 +35,39 @@
 <a href="/login"><button>Login</button></a>
 <a href="/register"><button>Register</button></a>
 
-<p>Search for flights</p>
+
+<h4>Search for flights via airport</h4>
 <form action="/flight/search/" method="POST">
+	<input type="text" name = "query_type" value="airport" readonly="readonly" required/>
 	<input type="text" name = "source" placeholder="source" required/>
 	<input type="text" name = "destination" placeholder="destination" required/>
+	<label>Departure</label>
 	<input type="date" id="departure_date" name="departure_date"
-	required>
+	   required>
 	<input type="submit" value = Submit />
 </form>
+
+<h4>Search for flights via city</h4>
+<form action="/flight/search/" method="POST">
+	<input type="text" name = "query_type" value="city" readonly="readonly" required/>
+	<br>
+	<label>Source</label>
+	<input type="text" name = "source_city" placeholder="source_city" required/>
+	<input type="text" name = "source_country" placeholder="source_country" required/>
+	<br>
+	<label>Destination</label>
+	<input type="text" name = "destination_city" placeholder="destination_city" required/>
+	<input type="text" name = "destination_country" placeholder="destination_country" required/>
+
+	<label>Departure</label>
+	<input type="date" id="departure_date" name="departure_date"
+	   required>
+	<input type="submit" value = Submit />
+</form>
+
 {% if flights%}
-<p><a href="/login">Login</a> or <a href="/register">Register</a> to purchase a flight<p>
 <p>View Flights</p>
+<p><a href="/login">Login</a> or <a href="/register">Register</a> to purchase a ticket </p>
 <table id="table">
 	<TR>
 		<TD>flight_number</TD>
@@ -59,7 +81,7 @@
 		<TD>status</TD>
 	</TR>
 	{% for flight in flights %}
-	<TR>
+	<TR class = "pick_flight">
 	   <TD>{{flight.flight_number}}</TD>
 	   <TD>{{flight.departure_date_time}}</TD>
 	   <TD>{{flight.airline_name}}</TD>
@@ -73,20 +95,21 @@
 	{% endfor %}
 </table>
 <button onclick="queryForRoundTrip()">Search For a Return Trip</button>
-{% endif%}
 
-{% if flights %}
+
 <p id="return_form">Search for return flights</p>
 <form id="return_form" action="/flight/search/return" method="POST">
 	<input id="return_form_source" type="text" name = "source" placeholder="source" required/>
 	<input id="return_form_destination" type="text" name = "destination" placeholder="destination" required/>
+	<label>Departure</label>
 	<input id="return_form_departure_date" type="date" name="departure_date"
 	   required>
 	<input type="submit" value = Submit />
 </form>
+{% endif%}
 {% if returnFlights%}
 <p>View {{airline}} Flights</p>
-<table id="table">
+<table id="table_return">
 	<TR>
 		<TD>flight_number</TD>
 		<TD>departure_date_time</TD>
@@ -99,7 +122,7 @@
 		<TD>status</TD>
 	</TR>
 	{% for flight in returnFlights %}
-	<TR>
+	<TR class = "pick_flight">
 	   <TD>{{flight.flight_number}}</TD>
 	   <TD>{{flight.departure_date_time}}</TD>
 	   <TD>{{flight.airline_name}}</TD>
@@ -112,7 +135,6 @@
 	</TR>
 	{% endfor %}
 </table>
-{% endif%}
 {% endif%}
 
 <p>Search for a flight's status</p> 
