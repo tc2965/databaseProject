@@ -183,6 +183,9 @@ def findFlightsByTime(start, end, username):
     query = "SELECT * FROM flight WHERE (departure_date_time BETWEEN %s AND %s) AND airline_name = %s"
     params = (start, end, airline)
     flights = executeQuery(query, params)
+    print(f"{flights=}")
+    if not flights:
+        return {"error": f"No {airline} flights between {start} and {end}"}
     return {"data": flights}
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS

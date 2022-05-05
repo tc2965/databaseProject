@@ -355,8 +355,13 @@ def view_flights_time():
     if request.method == 'POST': 
         start = request.form["start"]
         end = request.form["end"]
-        flights = dbmanager.findFlightsByTime(start, end, session["username"])["data"]
-        session["flights"] = flights
+        flights = dbmanager.findFlightsByTime(start, end, session["username"])
+        if flights.get("error"):
+            session.pop("flights", None)
+            session["error"] = flights["error"]
+        else:
+            session.pop("error", None)
+            session["flights"] = flights["data"]
         return redirect(url_for('staffHome'))
 
 # 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
@@ -365,8 +370,13 @@ def view_flights_time_default():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET': 
-        flights = dbmanager.findFlightsByTime(None, None, session["username"])["data"]
-        session["flights"] = flights
+        flights = dbmanager.findFlightsByTime(None, None, session["username"])
+        if flights.get("error"):
+            session.pop("flights", None)
+            session["error"] = flights["error"]
+        else:
+            session.pop("error", None)
+            session["flights"] = flights["data"]
         return redirect(url_for('staffHome'))
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
