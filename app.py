@@ -116,7 +116,11 @@ def viewFlightStatus():
     
     username = session.get("username")
     airline = session.get("airline")
-    session["status"] = status
+    if status.get("error"):
+        session["error"] = status["error"]
+    else:
+        session.pop("error", None)
+        session["status"] = status
     if username and airline:
         # it's a staff
         return redirect(url_for("staffHome"))

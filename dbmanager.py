@@ -151,9 +151,9 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
             arrival_plus_one_day = (datetime.strptime(arrival, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
     except ValueError:
         # because above will throw if input is 2022-01-01 format
-        departure_plus_one_day = (datetime.strptime(departure, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        departure_plus_one_day = (datetime.strptime(departure, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)).strftime("%Y-%m-%d")
         if arrival:
-            arrival_plus_one_day = (datetime.strptime(arrival, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+            arrival_plus_one_day = (datetime.strptime(arrival, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)).strftime("%Y-%m-%d")
 
     if arrival:
         query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND departure_date_time <= %s AND arrival_date_time >= %s AND arrival_date_time <= %s"
@@ -168,6 +168,7 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
             "status": "NOT FOUND", 
             "departure_date_time": departure
         }
+        return {"error": f"{airline} Flight #{flight_number} for {departure} is not found"}
     return status
 
 # AIRLINE STAFF USE CASE
@@ -339,7 +340,7 @@ def findFlightsAfterTime(source, destination, departure_date_time, username):
 
 def viewFlightCustomers(flight_number, departure_date_time, airline_name, username):
     staff = assertStaffPermission(username, airline_name)
-    plus_one_day = (datetime.strptime(departure_date_time,"%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
+    plus_one_day = (datetime.strptime(departure_date_time,"%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     query = "SELECT customer_email FROM ticket INNER JOIN purchases ON ticket.ID = purchases.ticket_id WHERE flight_number = %s AND departure_date_time >= %s AND departure_date_time < %s AND airline_name = %s;"
     params = (flight_number, departure_date_time, plus_one_day, airline_name)
     customers = executeQuery(query, params)
@@ -408,16 +409,6 @@ def createTickets(ticketsToCreate, username):
     return success
 
 # 3. CHANGE FLIGHT STATUS
-#def changeFlightStatus(status, flight_number, departure_date_time, airline, username): 
-    #staff = assertStaffPermission(username, airline)
-    #airline = staff["airline_name"]
-    #updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time = %s AND airline_name = %s"
-    #params = (status, flight_number, departure_date_time, airline)
-    #success = executeCommitQuery(updateFlightStatus, params)
-    #if success == 0:
-        #return f"Changing flight #{flight_number} unsuccessful"
-    #return f"Changing flight #{flight_number} successful"
-
 def changeFlightStatus(status, flight_number, departure_date_time, airline, username):
     staff = assertStaffPermission(username, airline)
     airline = staff["airline_name"]
