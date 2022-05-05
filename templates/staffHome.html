@@ -65,6 +65,26 @@
 </table>
 {% endif%}
 
+<h4>Lookup a {{airline}} flight's customers</h4>
+<form action="/view_flight/customers" method="POST">
+	<input type="text" name = "flight_number" placeholder="flight_number" required/>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="text" name = "airline_name" placeholder="airline_name" required/>
+	<input type="submit" value = Submit />
+</form>
+{% if flight_customers%}
+<table>
+<TR>
+	<TD>Customer Email</TD>
+</TR>
+<TR>
+{% for customer in flight_customers %}
+<TD>{{customer.customer_email}}</TD>
+</TR>
+{% endfor %}
+</table>
+{% endif%}
+
 
 <h4>Search for {{airline}} flights after date</h4>
 <form action="/view_flights/airport_city/after_time" method="POST">
