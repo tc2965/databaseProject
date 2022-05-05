@@ -162,8 +162,8 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
     return status
 
 # AIRLINE STAFF USE CASE
-# 1. VIEW FUTURE FLIGHTS WITHIN 30 DAYS
-def findFutureAirlineFlightsTime(start, end, username): 
+# 1. VIEW FLIGHTS WITHIN 30 DAYS
+def findFlightsByTime(start, end, username): 
     # This handles the default 30 day view and queries for specific dates
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
@@ -181,7 +181,7 @@ def findFutureAirlineFlightsTime(start, end, username):
     return {"data": flights}
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
-def findFutureAirlineFlightsAirport(way_type, airport, username): 
+def findFlightsByAirport(way_type, airport, username): 
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     if way_type == "source":
@@ -243,7 +243,7 @@ def searchFlights(source, destination, departure_date, return_date=None):
         return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
     return {"data": matchingFlights}
 
-def searchFlightsStaff(source, destination, departure_date, airline, return_date=None):
+def findFlightsByExactTime(source, destination, departure_date, airline, return_date=None):
     print(source, destination, departure_date, type(return_date), airline)
     conn = createConnection()
     cursor = conn.cursor()
@@ -292,7 +292,7 @@ def searchFlightsStaff(source, destination, departure_date, airline, return_date
         return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
     return {"data": matchingFlights}
 
-def searchFlightsAfter(source, destination, departure_date_time, username): 
+def findFlightsAfterTime(source, destination, departure_date_time, username): 
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     sourceQuery = "SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s"
@@ -334,8 +334,11 @@ def createFlight(flight, username):
     query = "INSERT INTO flight VALUES (%(flight_number)s, %(airplane_id)s, %(departure_date_time)s, %(departure_airport_code)s, %(arrival_date_time)s, %(arrival_airport_code)s, %(base_price)s, %(status)s, %(airline_name)s)"
     params = flight
     success = executeCommitQuery(query, params)
+    print(success)
     number = flight["flight_number"]
-    return f"Creating flight {number} successful" if success else success
+    if success == 0:
+        return f"Creating flight {number} unsuccessful"
+    return f"Creating flight {number} successful"
 
 def createTickets(ticketsToCreate, username): 
     print(ticketsToCreate)
@@ -345,7 +348,7 @@ def createTickets(ticketsToCreate, username):
     first_seats = ticketsToCreate["first_seats"]
     flight_number = ticketsToCreate["flight_number"]
     airline_name = ticketsToCreate["airline_name"]
-    departure = ticketsToCreate["departure_date_time"]
+    departure = ticketsToCreate["departure_date_time"][:19]
     depart = departure.replace(" ", "").replace("-", "").replace(":", "")
     airline = airline_name.upper()
     flight = flight_number.upper()
@@ -377,6 +380,9 @@ def createTickets(ticketsToCreate, username):
             full_query += query
         else:
             full_query += query + ", "
+    
+    if full_query[-2:] == ', ':
+        full_query = full_query[:-2]
     success = executeCommitQuery(full_query)
     return success
 

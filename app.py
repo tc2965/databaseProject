@@ -350,7 +350,7 @@ def view_flights_time():
     if request.method == 'POST': 
         start = request.form["start"]
         end = request.form["end"]
-        flights = dbmanager.findFutureAirlineFlightsTime(start, end, session["username"])["data"]
+        flights = dbmanager.findFlightsByTime(start, end, session["username"])["data"]
         session["flights"] = flights
         return redirect(url_for('staffHome'))
 
@@ -360,7 +360,7 @@ def view_flights_time_default():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET': 
-        flights = dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])["data"]
+        flights = dbmanager.findFlightsByTime(None, None, session["username"])["data"]
         session["flights"] = flights
         return redirect(url_for('staffHome'))
 
@@ -372,7 +372,7 @@ def view_flights_airports():
     if request.method == 'POST': 
         type = request.form["type"]
         airport = request.form["airport"]
-        flights = dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])
+        flights = dbmanager.findFlightsByAirport(type, airport, session["username"])
         print(flights)
         if flights.get("error"):
             session["error"] = flights["error"]
@@ -388,7 +388,7 @@ def searchFlightAfter():
         source = request.form["source"]
         destination = request.form["destination"]
         departure_date = request.form["departure_date"]
-        flights = dbmanager.searchFlightsAfter(source, destination, departure_date, session["username"])
+        flights = dbmanager.findFlightsAfterTime(source, destination, departure_date, session["username"])
         session["flights"] = flights.get("data")
         session["error"] = flights.get("error", None)
         return redirect(url_for('staffHome'))
@@ -405,7 +405,7 @@ def view_flights_airports_city_time():
         return_date = request.form.get("return_date")
         if len(return_date) == 0:
             return_date = None
-        flights = dbmanager.searchFlightsStaff(source, destination, departure_date, session["airline"], return_date)
+        flights = dbmanager.findFlightsByExactTime(source, destination, departure_date, session["airline"], return_date)
         session["flights"] = flights.get("data")
         session["error"] = flights.get("error", None)
         return redirect(url_for('staffHome'))

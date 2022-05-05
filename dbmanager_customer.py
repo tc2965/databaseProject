@@ -139,8 +139,11 @@ def getTicketPrice(airline_name, flight_number, departure_date_time, travel_clas
         error = f"No available tickets for {flight_number}"
         return {"error": error}
     elif count >= 0.75*capacity:
+        print("high_demand")
         high_demand = True
     else:
+        print("high_demand")
+        print(count, capacity)
         high_demand = False
         
     ticketQuery = "SELECT * FROM ticket WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND travel_class = %s AND ID not in (SELECT ticket_id FROM purchases)"
