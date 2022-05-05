@@ -545,7 +545,11 @@ def viewCustomerFlights():
     if request.method == 'POST':
         customer_email = request.form["customer_email"]
         customer_flights = dbmanager.viewCustomerFlights(customer_email, session["username"])
-        session["customer_flights"] = customer_flights 
+        if customer_flights.get("success"):
+            session["customer_flights"] = customer_flights["success"]
+        else:
+            session["error"] = customer_flights.get("error")
+        
         print(customer_flights)
         return redirect(url_for('staffHome'))
 

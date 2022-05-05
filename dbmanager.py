@@ -484,12 +484,17 @@ def viewMostFrequentCustomer(username):
     return mostFrequentFlyer
 
 def viewCustomerFlights(customer_email, username):
+    customer = checkUserExistsInDb("customer", customer_email)
+    if not customer: 
+        return {"error": f"{customer_email} doesn't exist"}
     staff = checkUserExistsInDb("airline_staff", username)
     airline = staff["airline_name"]
     query = "SELECT flight_number, departure_date_time, airline_name FROM purchases INNER JOIN ticket ON purchases.ticket_id = ticket.ID AND customer_email = %s AND airline_name = %s"
     params = (customer_email, airline)
     flights = executeQuery(query, params)
-    return flights
+    if not flights:
+        return {"error": f"{customer_email} doesn't have flights with {airline}"}
+    return {"success": flights}
     
 # 8. VIEW REPORTS 
 def viewReportDate(start, end, username):
