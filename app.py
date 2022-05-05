@@ -117,6 +117,7 @@ def viewFlightStatus():
     username = session.get("username")
     airline = session.get("airline")
     if status.get("error"):
+        session.pop("status", None)
         session["error"] = status["error"]
     else:
         session.pop("error", None)
@@ -525,9 +526,12 @@ def viewFlightRatings():
         flight_number = request.form["flight_number"]
         ratings = dbmanager.viewFlightRatings(flight_number, session["username"])
         if ratings.get("error"):
+            session.pop("ratings", None)
             session["error"] = ratings["error"]
             return redirect(url_for('staffHome'))
-        session["ratings"] = ratings 
+        else:
+            session.pop("error", None)
+            session["ratings"] = ratings 
         print(ratings)
         return redirect(url_for('staffHome'))
      

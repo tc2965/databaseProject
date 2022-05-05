@@ -163,11 +163,6 @@ def viewFlightStatus(airline, flight_number, departure, arrival=None):
         params = (airline, flight_number, departure, departure_plus_one_day)
     status = executeQuery(query, params, True)
     if not status: 
-        status = {
-            "flight_number": flight_number, 
-            "status": "NOT FOUND", 
-            "departure_date_time": departure
-        }
         return {"error": f"{airline} Flight #{flight_number} for {departure} is not found"}
     return status
 
@@ -445,8 +440,11 @@ def addAirport(airport):
 def viewFlightRatings(flight_number, username):
     findFlight = "SELECT * FROM flight WHERE flight_number = %s"
     params = flight_number
-    flights = executeQuery(findFlight, params)
-    airline = flights[0]["airline_name"]
+    flights = executeQuery(findFlight, params, True)
+    if flights:
+        airline = flights["airline_name"]
+    else:
+        return {"error": f"Cannot find flight #{flight_number}"}
     
     assertStaffPermission(username, airline)
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
