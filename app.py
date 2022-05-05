@@ -38,6 +38,23 @@ def staffRegister():
     return render_template('staffRegister.html')
 
 # APPLICATION USE CASES
+# 1. VIEW FUTURE FLIGHTS BY AIRPORT OR CITY AND TIME
+@app.route('/view_flights/airport_city/time', methods=['POST'])
+def view_flights_airports_city_time():
+    if not session.get("username"):
+        return None # todo render page with error
+    if request.method == 'POST':
+        source = request.form["source"]
+        destination = request.form["destination"]
+        departure_date = request.form["departure_date"]
+        return_date = request.form.get("return_date")
+        if len(return_date) == 0:
+            return_date = None
+        flights = dbmanager.searchFlights(source, destination, departure_date, return_date)
+        session["flights"] = flights.get("data")
+        session["error"] = flights.get("error", None)
+        return redirect(url_for('staffHome'))
+
 # 1. VIEW PUBLIC INFO A
 @app.route('/flight/search/', methods=['POST'])
 def searchFlights(): 
@@ -310,8 +327,10 @@ def rateAndComment():
         response = dbmanager_customer.giveRatingsAndComments(session["username"], ratings_comments)
         print(f"{response=}")
         if response.get("success"):
+            session.pop("error", None)
             session["rateTrip"] = response["success"]
         else: 
+            session.pop("rateTrip", None)
             session["error"] = response.get("error", "Trouble rating flight, try again later.")
             print(session["error"])
         return redirect(url_for("manageFlights"))
@@ -376,23 +395,6 @@ def view_flights_airports():
             session["error"] = flights["error"]
         else:
             session["flights"] = flights["data"]
-        return redirect(url_for('staffHome'))
-
-# 1. VIEW FUTURE FLIGHTS BY AIRPORT OR CITY AND TIME
-@app.route('/view_flights/airport_city/time', methods=['POST'])
-def view_flights_airports_city_time():
-    if not session.get("username"):
-        return None # todo render page with error
-    if request.method == 'POST':
-        source = request.form["source"]
-        destination = request.form["destination"]
-        departure_date = request.form["departure_date"]
-        return_date = request.form.get("return_date")
-        if len(return_date) == 0:
-            return_date = None
-        flights = dbmanager.searchFlights(source, destination, departure_date, return_date)
-        session["flights"] = flights.get("data")
-        session["error"] = flights.get("error", None)
         return redirect(url_for('staffHome'))
     
 @app.route('/view_flights/airport_city/after_time', methods=['POST'])    
@@ -641,7 +643,7 @@ def customerHome():
     error = session.get("error")
     myFlights = viewMyUpcomingFlights()
     mySpending = session.get("mySpending")
-    print(f"{mySpending=}")
+    print(f"{flight_status=}")
     return render_template('customerHome.html', username=username, name=name, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights, mySpending=mySpending)
 
 @app.route('/logout')

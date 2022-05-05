@@ -39,7 +39,7 @@
 <a href="/register"><button>Register</button></a>
 {% endif %}
 
-<h4>Search for flights via airport</h4>
+<h4>Search for flights via airport after date</h4>
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "query_type" value="airport" readonly="readonly" required/>
 	<input type="text" name = "source" placeholder="source" required/>
@@ -50,7 +50,7 @@
 	<input type="submit" value = Submit />
 </form>
 
-<h4>Search for flights via city</h4>
+<h4>Search for flights via city after date</h4>
 <form action="/flight/search/" method="POST">
 	<input type="text" name = "query_type" value="city" readonly="readonly" required/>
 	<br>
@@ -144,11 +144,8 @@
 <form action="/flight_status/view/" method="POST">
 	<input type="text" name = "airline" placeholder="airline" required/>
 	<input type="text" name = "flight_number" placeholder="flight_number" required/>
-	<label>Departure Date
-	<input type="date" name = "departure_date" required/>
-	</label>
-	<label>Arrival Date</label>
-	<input type="date" name = "arrival_date">
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
 	<input type="submit" value = Submit />
 </form>
 {% if flight_status%}

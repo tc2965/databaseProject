@@ -367,7 +367,16 @@ def trackSpending(email, start_date=None, end_date=None):
             else:
                 first_day_of_next_month = datetime(six_month_ago.year, six_month_ago.month+1, 1)
             cursor.execute("SELECT sum(sold_price) FROM purchases WHERE customer_email = %s AND date_time >= %s", (email, one_year_ago))
-            tot_spend = float(cursor.fetchall()[0]["sum(sold_price)"]) # total spend within the past year # not sure whether I should convert it to float
+            tot_spend = cursor.fetchone()["sum(sold_price)"]
+            print(tot_spend)
+            if not tot_spend:
+                return {
+                        "total_spent": 0, 
+                        "start": start_date, 
+                        "end": end_date,
+                        "monthly": 0
+                        }
+            tot_spend = float(tot_spend) # total spend within the past year # not sure whether I should convert it to float
 
             cursor.execute("""SELECT YEAR(date_time) as year, MONTH(date_time) as month, sum(sold_price) as total FROM purchases
             WHERE customer_email = %s AND date_time >= %s

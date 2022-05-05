@@ -80,6 +80,7 @@
 			<TD>Month</TD>
 			<TD>Total</TD>
 		</TR>
+		{% if mySpending.total_spent != 0%}
 		{% for month in mySpending.monthly%}
 			<TR>
 				<TD>{{month.year}}</TD>
@@ -87,6 +88,7 @@
 				<TD>{{month.total}}</TD>
 			</TR>
 		{% endfor %}
+		{% endif %}
 	</table>
 {% endif %}
 
@@ -230,12 +232,8 @@
 <form action="/flight_status/view/" method="POST">
 	<input type="text" name = "airline" placeholder="airline" required/>
 	<input type="text" name = "flight_number" placeholder="flight_number" required/>
-	<label>Departure Date
-	<input type="date" name = "departure_date" required>
-	</label>
-	<label>Arrival Date
-	<input type="date" name = "arrival_date">
-	</label>
+	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="text" name = "arrival_date" placeholder="arrival_date"/>
 	<input type="submit" value = Submit />
 </form>
 {% if flight_status%}

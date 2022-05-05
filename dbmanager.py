@@ -147,12 +147,18 @@ def searchFlightsCityCountry(source_city, source_country, destination_city, dest
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
     if arrival: 
-        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND arrival_date_time >= %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND arrival_date_time = %s"
         params = (airline, flight_number, departure, arrival)
     else:
-        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time = %s"
         params = (airline, flight_number, departure)
     status = executeQuery(query, params, True)
+    if not status: 
+        status = {
+            "flight_number": flight_number, 
+            "status": "NOT FOUND", 
+            "departure_date_time": departure
+        }
     return status
 
 # AIRLINE STAFF USE CASE
