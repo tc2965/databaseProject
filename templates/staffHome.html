@@ -66,8 +66,8 @@
 {% endif%}
 
 
-<h4>Search for {{airline}} flights</h4>
-<form action="/flight/search/" method="POST">
+<h4>Search for {{airline}} flights after date</h4>
+<form action="/view_flights/airport_city/after_time" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
 	<input type="text" name = "destination" placeholder="destination" required/>
 	<input type="text" name = "departure_date" placeholder="departure_date" required/>

@@ -370,9 +370,12 @@ def view_flights_airports():
     if request.method == 'POST': 
         type = request.form["type"]
         airport = request.form["airport"]
-        flights = dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])["data"]
+        flights = dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])
         print(flights)
-        session["flights"] = flights
+        if flights.get("error"):
+            session["error"] = flights["error"]
+        else:
+            session["flights"] = flights["data"]
         return redirect(url_for('staffHome'))
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORT OR CITY AND TIME
@@ -388,6 +391,19 @@ def view_flights_airports_city_time():
         if len(return_date) == 0:
             return_date = None
         flights = dbmanager.searchFlights(source, destination, departure_date, return_date)
+        session["flights"] = flights.get("data")
+        session["error"] = flights.get("error", None)
+        return redirect(url_for('staffHome'))
+    
+@app.route('/view_flights/airport_city/after_time', methods=['POST'])    
+def searchFlightAfter():
+    if not session.get("username"):
+        return None # todo render page with error
+    if request.method == 'POST':
+        source = request.form["source"]
+        destination = request.form["destination"]
+        departure_date = request.form["departure_date"]
+        flights = dbmanager.searchFlightsAfter(source, destination, departure_date, session["username"])
         session["flights"] = flights.get("data")
         session["error"] = flights.get("error", None)
         return redirect(url_for('staffHome'))
@@ -487,8 +503,10 @@ def viewFlightRatings():
     if request.method == 'POST':
         flight_number = request.form["flight_number"]
         ratings = dbmanager.viewFlightRatings(flight_number, session["username"])
+        if ratings.get("error"):
+            session["error"] = ratings["error"]
+            return redirect(url_for('staffHome'))
         session["ratings"] = ratings 
-        session["error"] = ratings.get("error", None)
         print(ratings)
         return redirect(url_for('staffHome'))
      

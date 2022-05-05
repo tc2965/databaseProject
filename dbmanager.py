@@ -184,6 +184,8 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
         query = "SELECT * FROM flight WHERE arrival_airport_code = %s AND airline_name = %s"
     params = (airport, airline)
     flights = executeQuery(query, params)
+    if not flights:
+        return {"error": f"No {way_type} flights to/from {airport}"}
     return {"data" : flights}
 
 def searchFlights(source, destination, departure_date, return_date=None):
@@ -234,6 +236,31 @@ def searchFlights(source, destination, departure_date, return_date=None):
     if not matchingFlights:
         return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
     return {"data": matchingFlights}
+
+def searchFlightsAfter(source, destination, departure_date_time, username): 
+    staff = checkUserExistsInDb("airline_staff", username)
+    airline = staff["airline_name"]
+    sourceQuery = "SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s"
+    params = (source, source)
+    departure_airport_code = executeQuery(sourceQuery, params, True)
+    destinationQuery ="SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s"
+    params = (destination, destination)
+    arrival_airport_code = executeQuery(destinationQuery, params, True)
+
+    if not departure_airport_code and not arrival_airport_code:
+        print("bad airport")
+        return {"error": f"No matching flights for departure from {source} at {departure_date_time} to {destination}"}
+
+    departure_airport_code = departure_airport_code["airport_code"]
+    arrival_airport_code = arrival_airport_code["airport_code"]
+
+    flightQuery = "SELECT flight_number, departure_date_time, airline_name, airplane_id, departure_airport_code, arrival_date_time, arrival_airport_code, base_price FROM flight WHERE departure_airport_code = %s AND arrival_airport_code = %s AND departure_date_time >= %s AND airline_name = %s"
+    params = (departure_airport_code, arrival_airport_code, departure_date_time, airline)
+    flights = executeQuery(flightQuery, params)
+    if not flights:
+        return {"error": f"No matching flights for departure from {source} after {departure_date_time} to {destination}"}
+    return {"data": flights}
+    
 
 # 2. CREATE NEW FLIGHTS 
 def createFlight(flight, username): 
