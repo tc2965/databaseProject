@@ -409,11 +409,22 @@ def createTickets(ticketsToCreate, username):
     return success
 
 # 3. CHANGE FLIGHT STATUS
-def changeFlightStatus(status, flight_number, departure_date_time, airline, username): 
+#def changeFlightStatus(status, flight_number, departure_date_time, airline, username): 
+    #staff = assertStaffPermission(username, airline)
+    #airline = staff["airline_name"]
+    #updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time = %s AND airline_name = %s"
+    #params = (status, flight_number, departure_date_time, airline)
+    #success = executeCommitQuery(updateFlightStatus, params)
+    #if success == 0:
+        #return f"Changing flight #{flight_number} unsuccessful"
+    #return f"Changing flight #{flight_number} successful"
+
+def changeFlightStatus(status, flight_number, departure_date_time, airline, username):
     staff = assertStaffPermission(username, airline)
     airline = staff["airline_name"]
-    updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time = %s AND airline_name = %s"
-    params = (status, flight_number, departure_date_time, airline)
+    plus_one_day = (datetime.strptime(departure_date_time, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    updateFlightStatus = "UPDATE flight SET status = %s WHERE flight_number = %s AND departure_date_time >= %s AND departure_date_time < %s AND airline_name = %s"
+    params = (status, flight_number, departure_date_time, plus_one_day, airline)
     success = executeCommitQuery(updateFlightStatus, params)
     if success == 0:
         return f"Changing flight #{flight_number} unsuccessful"
