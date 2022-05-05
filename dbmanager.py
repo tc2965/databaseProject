@@ -2,7 +2,7 @@ import pymysql.cursors
 import os 
 from dotenv import load_dotenv
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil.relativedelta import *
 from flask import abort
 
@@ -145,22 +145,6 @@ def searchFlightsCityCountry(source_city, source_country, destination_city, dest
     return searchFlightsAirport(departure_airport_code["airport_code"], arrival_airport_code["airport_code"], departure_date)
 
 # 1. VIEW PUBLIC INFO B
-#def viewFlightStatus(airline, flight_number, departure, arrival=None):
-    #if arrival: 
-        #query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND arrival_date_time = %s"
-        #params = (airline, flight_number, departure, arrival)
-    #else:
-        #query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time = %s"
-        #params = (airline, flight_number, departure)
-    #status = executeQuery(query, params, True)
-    #if not status: 
-        #status = {
-            #"flight_number": flight_number, 
-            #"status": "NOT FOUND", 
-            #"departure_date_time": departure
-        #}
-    #return status
-
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
     if arrival:
         departure_plus_one_day = (datetime.strptime(departure, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
