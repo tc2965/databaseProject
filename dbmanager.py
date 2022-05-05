@@ -146,14 +146,21 @@ def searchFlightsCityCountry(source_city, source_country, destination_city, dest
 
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
-    if arrival:
+    try:
         departure_plus_one_day = (datetime.strptime(departure, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
-        arrival_plus_one_day = (datetime.strptime(arrival, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
-        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND departure_date_time < %s AND arrival_date_time >= %s AND arrival_date_time < %s"
+        if arrival:
+            arrival_plus_one_day = (datetime.strptime(arrival, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
+    except ValueError:
+        # because above will throw if input is 2022-01-01 format
+        departure_plus_one_day = (datetime.strptime(departure, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        if arrival:
+            arrival_plus_one_day = (datetime.strptime(arrival, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    if arrival:
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time >= %s AND departure_date_time <= %s AND arrival_date_time >= %s AND arrival_date_time <= %s"
         params = (airline, flight_number, departure, departure_plus_one_day, arrival, arrival_plus_one_day)
     else:
-        departure_plus_one_day = (datetime.strptime(departure, "%m/%d/%Y") + timedelta(days=1)).strftime("%Y-%m-%d")
-        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s AND departure_date_time < %s"
+        query = "SELECT status, flight_number, departure_date_time FROM flight WHERE airline_name =%s AND flight_number = %s AND departure_date_time >= %s AND departure_date_time <= %s"
         params = (airline, flight_number, departure, departure_plus_one_day)
     status = executeQuery(query, params, True)
     if not status: 
