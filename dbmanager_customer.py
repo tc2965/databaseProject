@@ -119,94 +119,114 @@ def searchFlights_customer(source, destination, departure_date, return_date=None
     cursor.close()
     return convertToDict("flight_number", matchingFlights)
 
+def getTicketPrice(airline_name, flight_number, departure_date_time, travel_class):
+    print("getTicketPrice", airline_name, flight_number, departure_date_time, travel_class)
+    # I suppose here to be sure that two tickets are for the same flights, they must have the same airline_name, flight_number and departure_date_time (including hour-mintue-second), because one possible case is that the same flight go round trip for multiple times within a single day
+    # decide whether the flight is on high-demand
+    flightQuery = "SELECT * FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s"
+    params = (airline_name, flight_number, departure_date_time)
+    flight = executeQuery(flightQuery, params, True)
+
+    airplane_id = flight["airplane_id"]
+    airplaneSeatQuery = "SELECT number_of_seats FROM airplane WHERE ID = %s"
+    params = (airplane_id)
+    capacity = executeQuery(airplaneSeatQuery, params, True)["number_of_seats"]
+
+    countQuery = "SELECT COUNT(*) from purchases WHERE ticket_id in (SELECT ID FROM ticket WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND travel_class = %s)"
+    params = (airline_name, flight_number, departure_date_time, travel_class)
+    count = executeQuery(countQuery, params, True)["COUNT(*)"] # the number of tickets already sold out of this flight
+    if count == capacity:
+        error = f"No available tickets for {flight_number}"
+        return {"error": error}
+    elif count >= 0.75*capacity:
+        high_demand = True
+    else:
+        high_demand = False
+        
+    ticketQuery = "SELECT * FROM ticket WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND travel_class = %s AND ID not in (SELECT ticket_id FROM purchases)"
+    params = (airline_name, flight_number, departure_date_time, travel_class) # find available tickets
+    tickets = executeQuery(ticketQuery, params)
+    
+    if len(tickets) == 0:
+        error = f"No available tickets for {flight_number}"
+        return {"error": error}
+    ticket = tickets[0]
+    ticket_id = ticket["ID"]
+    
+    basePriceQuery = "SELECT base_price, departure_airport_code, arrival_airport_code, arrival_date_time FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s"
+    params = (airline_name, flight_number, departure_date_time)
+    result = executeQuery(basePriceQuery, params, True)
+    base_price = float(result["base_price"])
+    departure_airport_code = result["departure_airport_code"]
+    arrival_airport_code = result["arrival_airport_code"]
+    arrival_date_time = result["arrival_date_time"]
+    if high_demand:
+        sold_price = round(base_price*1.25, 2)
+    else:
+        sold_price = round(base_price, 2)
+    
+    ticket_preview = {
+        "ticket_id" : ticket_id, 
+        "airline": airline_name, 
+        "flight_number": flight_number, 
+        "departure_date_time": departure_date_time, 
+        "departure_airport_code": departure_airport_code,
+        "arrival_airport_code": arrival_airport_code, 
+        "arrival_date_time":arrival_date_time,
+        "airplane_id": airplane_id,
+        "travel_class": travel_class,
+        "price": sold_price
+    }
+    return ticket_preview
+
 # 3. Purchase tickets (for the front end, may implement together with the "searchFlights")
-def purchaseTicketsDict(purchase):
+def purchaseTicketsDict(purchase, ticket1price, ticket2price=None):
     print(purchase)
     email = purchase["customer_email"]
-    airline_name = purchase["airline_name"]
-    flight_number = purchase["flight_number"]
-    departure_date_time = purchase["departure_date_time"]
-    travel_class = purchase["travel_class"]
     card_type = purchase["card_type"]
     card_number = purchase["card_number"]
     name_on_card = purchase["name_on_card"]
     card_exp = purchase["card_expiration"]
     
+    ticket_id = purchase["ticket_id"]
+    airline_name = purchase["airline_name"]
+    flight_number = purchase["flight_number"]
+    departure_date_time = purchase["departure_date_time"]
+    
+    return_ticket_id = purchase["ticket_id_return"]
     return_flight_number = purchase.get("flight_number_return")
     return_airline_name = purchase.get("airline_name_return")
     return_departure_date_time = purchase.get("departure_date_time_return") 
 
-    to_trip = purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
-    print("Purchasing Ticket for: ", flight_number, airline_name, departure_date_time) 
+    to_trip = purchaseTickets(ticket_id, ticket1price, email, card_type, card_number, name_on_card, card_exp)
+    print("Purchasing Ticket for: ", flight_number, airline_name, departure_date_time)
+    print(to_trip) 
 
-    error = to_trip.get("error")
+    error = to_trip.get("error",None)
     if error: 
         return [to_trip]
     
-    if return_flight_number and return_airline_name and return_departure_date_time: 
+    if return_ticket_id: 
         print("Purchasing Ticket for: ", return_flight_number, return_airline_name, return_departure_date_time) 
-        return_trip = purchaseTickets(email, return_airline_name, return_flight_number, return_departure_date_time, travel_class, card_type, card_number, name_on_card, card_exp)
+        return_trip = purchaseTickets(return_ticket_id, ticket2price, email, card_type, card_number, name_on_card, card_exp)
+        print(return_trip)
+        error = return_trip.get("error", None)
+        if error:
+            return return_trip
         return [to_trip, return_trip]
     else: 
-        return[to_trip]
+        return[to_trip]    
 
-def purchaseTickets(email, airline_name, flight_number, departure_date_time, travel_calss, card_type, card_number, name_on_card, card_exp): # various inputs through a form
-    # I suppose here to be sure that two tickets are for the same flights, they must have the same airline_name, flight_number and departure_date_time (including hour-mintue-second), because one possible case is that the same flight go round trip for multiple times within a single day
-    conn = createConnection()
-    cursor = conn.cursor()
-    exists = checkUserExistsInDb("customer", "email", email, cursor)
-    if (exists):
-        # decide whether the flight is on high-demand
-        query = ("SELECT * FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s")
-        params = (airline_name, flight_number, departure_date_time)
-        flight = executeQuery(query, params, True)
-        airplane_id = flight["airplane_id"]
-        cursor.execute("SELECT number_of_seats FROM airplane WHERE ID = %s", (airplane_id))
-        capacity = cursor.fetchall()[0]["number_of_seats"] # flight airplane capacity
-
-        cursor.execute("SELECT COUNT(*) from purchases WHERE ticket_id in (SELECT ID FROM ticket WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s)", (airline_name, flight_number, departure_date_time))
-        count = cursor.fetchall()[0]["COUNT(*)"] # the number of tickets already sold out of this flight
-
-        if count == capacity:
-            print("No available tickets.")
-            cursor.close()
-            return False
-        elif count >= 0.75*capacity:
-            high_demand = True
-        else:
-            high_demand = False
-
-        # select a ticket
-        cursor.execute("""SELECT * FROM ticket WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s AND travel_class = %s AND ID not in
-        (SELECT ticket_id FROM purchases)""", (airline_name, flight_number, departure_date_time, travel_calss)) # find available tickets
-
-        tickets = cursor.fetchall()
-        if len(tickets) == 0:
-            error = f"No available tickets for {flight_number}"
-            cursor.close()
-            return {"error": error}
-        ticket = tickets[0]
-        ticket_id = ticket["ID"]
-
-        # find the base price and sold price
-        cursor.execute("SELECT base_price FROM flight WHERE airline_name = %s AND flight_number = %s AND departure_date_time = %s", (airline_name, flight_number, departure_date_time))
-        base_price = float(cursor.fetchall()[0]["base_price"])
-        if high_demand:
-            sold_price = round(base_price*1.25, 2)
-        else:
-            sold_price = round(base_price, 2) # here I find that we did not distinguish the price between the economy class and the business class, i am not sure whether we need to modify the schema of the database to implement this function. But for simplicity, we can set the price of the business class to be like sold_price(business) = sold_price(economy)*1.3, etc.
-
-        # get purchase time
-        purchase_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # import pdb; pdb.set_trace()
-        cursor.execute("INSERT INTO purchases VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", (ticket_id, sold_price, purchase_time, email, card_type, card_number, name_on_card, card_exp))
-        conn.commit()
-        cursor.close()
-        return {"success": ticket_id}
-    else:
-        cursor.close()
-        return {"error": "Trouble purchasing, plesae try again later"}
+def purchaseTickets(ticket_id, sold_price, email, card_type, card_number, name_on_card, card_exp
+): # various inputs through a form
+    # get purchase time
+    purchase_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    purchaseInsert = "INSERT INTO purchases VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    params = (ticket_id, sold_price, purchase_time, email, card_type, card_number, name_on_card, card_exp)
+    success = executeCommitQuery(purchaseInsert, params)
+    if success == 0:
+        return {"error": "Trouble purchasing at the moment, try again later"}
+    return {"success": ticket_id}
 
 # 4. Cancel Trip
 def cancelTrip(email, ticket_id):
@@ -220,25 +240,29 @@ def cancelTrip(email, ticket_id):
         cursor.execute("SELECT * FROM purchases WHERE customer_email = %s AND ticket_id = %s", (email, ticket_id))
         tickets = cursor.fetchall()
         if len(tickets) == 0:
-            message ="No such ticket to be cancelled."
+            error ="No such ticket to be cancelled."
             cursor.close()
-            return message
+            return {"error":error}
         else:
             cursor.execute("SELECT departure_date_time FROM ticket WHERE ID = %s", (ticket_id))
             departure_date_time = cursor.fetchall()[0]["departure_date_time"]
             now = datetime.now()
+            print((departure_date_time - now))
             if (departure_date_time - now) > timedelta(hours=24):
                 cursor.execute("DELETE FROM purchases WHERE customer_email = %s AND ticket_id = %s", (email, ticket_id))
                 conn.commit()
                 cursor.close()
-                return f"Success cancelling flight for ticket {ticket_id}"
+                return {"success": f"Success cancelling flight for ticket {ticket_id}"}
+            elif (departure_date_time - now) < timedelta(hours=-24):
+                error = "Cannot cancel completed flights"
+                return {"error": error}
             else:
-                message = "Cancellation of a flight ticket taking place within 24 hours is not allowed."
+                error = "Cancellation of a flight ticket taking place within 24 hours is not allowed."
                 cursor.close()
-                return message
+                return {"error": error}
     else:
         cursor.close()
-        return "Error handling flight cancellation. Please try again later."
+        return {"error": "Error handling flight cancellation. Please try again later."}
 
 # 5. Give Ratings and Comment on previous flights
 def giveRatingsAndComments(email, rating_comment):
@@ -351,8 +375,8 @@ def trackSpending(email, start_date=None, end_date=None):
             month_wise_spending = cursor.fetchall() # I left the raw dictionary here, not sure whether further processing is needed
 
             cursor.close()
-            start = one_year_ago.strftime("%Y-%m-%d")
-            end = now.strftime("%Y-%m-%d")
+            start_date = one_year_ago.strftime("%Y-%m-%d")
+            end_date = now.strftime("%Y-%m-%d")
             # return tot_spend, month_wise_spending
         else:
             # if the input format of the date is like "04/30/2022", we need these two lines
@@ -375,8 +399,8 @@ def trackSpending(email, start_date=None, end_date=None):
             # return tot_spend, month_wise_spending
         return {
             "total_spent": tot_spend, 
-            "start": start, 
-            "end": end,
+            "start": start_date, 
+            "end": end_date,
             "monthly": month_wise_spending
         }
     else:

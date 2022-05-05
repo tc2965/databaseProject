@@ -1,0 +1,39 @@
+<html>
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+        td {padding: 5px}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 70%;
+			padding: 10px;
+		}
+	</style>
+</head>
+<body class="center">
+    <h1>Welcome {{name}}</h1>
+    <p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
+    <a href="/customerHome"><button>Go back home</button></a>
+    <h2>{{purchaseStatus}}</h2>
+</body>
+</html>

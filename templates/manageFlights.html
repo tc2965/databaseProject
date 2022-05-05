@@ -58,7 +58,7 @@
 <p class="error">ERROR! {{error}}</p>
 {% endif %}
 {% if myFlights %}
-<h3> Your flight History: </h3>
+<h4> Your flight History: </h4>
 <table id ="table">
     <TR>
         <TD>Ticket ID</TD>
@@ -82,7 +82,7 @@
 <button onclick="commentFlight()">Rate Trip</button>
 {% endif %}
 
-<h3>Rate and Comment on a Flight</h3>
+<h4>Rate and Comment on a Flight</h4>
 <form action="/rate_and_comment" method="POST">
 	<input type="text" id = "rate_ticket_id" name = "ticket_id" placeholder="ticket_id" required/>
 	<input type="number" name = "rating" value="5" min="!" max="5" required/>
@@ -93,11 +93,11 @@
 <p>{{rateTrip}}</p>
 {% endif %}
 
-<h3 id="cancel_flight">Cancel a Flight</h3>
+<h4 id="cancel_flight">Cancel a Flight</h4>
 {% if cancelTrip %}
 <p>{{cancelTrip}}</p>
 {% endif %}
-<p>Please note, cancellations are irreversible. If you understand, enter the ticket of the flight you wish to cancel</p>
+<p>Please note, cancellations are irreversible. If you understand, enter the ticket of the flight you wish to cancel.</p>
 <form id="cancel_flight" action="/cancel_trip" method="POST">
 	<input id="cancel_flight_ticket" type="text" name = "ticketID" placeholder="ticketID" required/>
 	<input type="submit" value = Submit />

@@ -1,0 +1,219 @@
+<html>
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+        td {padding: 5px}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 70%;
+			padding: 10px;
+		}
+	</style>
+</head>
+<body class="center">
+<h1>Welcome {{name}}</h1>
+<p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
+<a href="/customerHome"><button>Go back home</button></a>
+{% if error %}
+<p class="error"><strong>Error! </strong> {{error}}</p>
+{% endif %}
+{% if to_ticket%}
+<h4> Purchase Preview </h4>
+<p>View First Trip</p>
+<table id="table">
+	<TR>
+		<TD>Ticket ID</TD>
+        <TD>Travel Class</TD>
+		<TD>Price</TD>
+		<TD>Airline</TD>
+		<TD>Flight Number</TD>
+		<TD>Departure Date and Time</TD>
+		<TD>Departure Airport</TD>
+		<TD>Arrival Date and Time</TD>
+		<TD>Arrival Airport</TD>
+		<TD>Airplane</TD>
+	</TR>
+	<TR class = "pick_flight">
+	   <TD>{{to_ticket.ticket_id}}</TD>
+	   <TD>{{to_ticket.travel_class}}</TD>
+       <TD>${{to_ticket.price}}</TD>
+	   <TD>{{to_ticket.airline}}</TD>
+	   <TD>{{to_ticket.flight_number}}</TD>
+	   <TD>{{to_ticket.departure_date_time}}</TD>
+	   <TD>{{to_ticket.departure_airport_code}}</TD>
+       <TD>{{to_ticket.arrival_date_time}}</TD>
+	   <TD>{{to_ticket.arrival_airport_code}}</TD>
+	   <TD>{{to_ticket.airplane_id}}</TD>
+	</TR>
+</table>
+<button onclick="oneWaySelected()">Purchase Trip</button>
+{% endif %}
+
+{% if from_ticket%}
+<p>View Second Trip</p>
+<table id="table_return">
+	<TR>
+		<TD>Ticket ID</TD>
+        <TD>Travel Class</TD>
+		<TD>Price</TD>
+		<TD>Airline</TD>
+		<TD>Flight Number</TD>
+		<TD>Departure Date and Time</TD>
+		<TD>Departure Airport</TD>
+		<TD>Arrival Date and Time</TD>
+		<TD>Arrival Airport</TD>
+		<TD>Airplane</TD>
+
+	</TR>
+	<TR class = "pick_flight">
+	   <TD>{{from_ticket.ticket_id}}</TD>
+	   <TD>{{from_ticket.travel_class}}</TD>
+       <TD>${{from_ticket.price}}</TD>
+	   <TD>{{from_ticket.airline}}</TD>
+	   <TD>{{from_ticket.flight_number}}</TD>
+	   <TD>{{from_ticket.departure_date_time}}</TD>
+	   <TD>{{from_ticket.departure_airport_code}}</TD>
+       <TD>{{from_ticket.arrival_date_time}}</TD>
+	   <TD>{{from_ticket.arrival_airport_code}}</TD>
+	   <TD>{{from_ticket.airplane_id}}</TD>
+	</TR>
+</table>
+<button onclick="roundTripSelected()">Purchase Trip</button>
+{% endif %}
+
+{% if to_ticket or from_ticket %}
+<p id="purchase_form">Purchase Tickets</p>
+<form id="purchase_form" action="/purchase_tickets" method="POST">
+	<!--one way info-->
+	<label>Source Flight</label>
+    <input id="purchase_form_ticket_id" type="text" name = "ticket_id" placeholder="ticket_id" readonly="readonly" required/>
+	<input id="purchase_form_flight_number" type="text" name = "flight_number" placeholder="flight_number" readonly="readonly" required/>
+	<input id="purchase_form_departure_date" type="text" name = "departure_date_time" placeholder="departure_date" readonly="readonly" required/>
+	<input id="purchase_form_airline_name" type="text" name = "airline_name" placeholder="airline_name" readonly="readonly" required/>
+
+	<br>
+	{% if from_ticket%}
+	<label>Return Flight</label>
+    <input id="purchase_form_ticket_id_return" type="text" name = "ticket_id_return" placeholder="ticket_id" required/>
+	<input id="purchase_form_flight_number_return" type="text" name = "flight_number_return" placeholder="flight_number"/>
+	<input id="purchase_form_departure_date_return" type="text" name = "departure_date_time_return" placeholder="departure_date"/>
+	<input id="purchase_form_airline_name_return" type="text" name = "airline_name_return" placeholder="airline_name"/>
+	<br>
+	{% endif %}
+	<label>Payment Info</label>
+	<input id="purchase_form_flight_number_return" type="text" name = "card_number" placeholder="card_number" required/>
+	<input id="purchase_form_flight_number_return" type="text" name = "name_on_card" placeholder="name_on_card" required/>
+	<input id="purchase_form_flight_number_return" type="text" name = "card_expiration" placeholder="card_expiration" required/>
+	<select name="card_type" required>
+		<option value ="Debit">Debit</option>
+		<option value ="Credit">Credit</option>
+	</select>
+	<input type="submit" value = Purchase />
+</form>
+{% endif %}
+
+{% if purchaseStatus %}
+<p>{{purchaseStatus}}</p>
+{% endif %}
+
+</body>
+<script>
+	var table = document.getElementById('table');
+	var table_return = document.getElementById('table_return')
+	var selected = table.getElementsByClassName('selected');
+	table.onclick = highlight;
+	table_return.onclick = highlight;
+
+	function highlight(e) {
+		if (selected[0]) selected[0].className = '';
+		e.target.parentNode.className = 'selected';
+	}
+
+	function oneWaySelected(){
+		console.log("oneWaySelected")
+		var element = document.querySelectorAll('.selected');
+		console.log(element)
+		if(element[0]!== undefined){ //it must be selected
+            var ticket_id = element[0].children[0].firstChild.data
+            var price = element[0].children[2].firstChild.data
+			var flight_number = element[0].children[4].firstChild.data
+			var departure_date_time = element[0].children[5].firstChild.data
+			var airline_name = element[0].children[3].firstChild.data
+            var travel_class = element[0].children[1].firstChild.data
+			console.log(travel_class, flight_number, departure_date_time, airline_name)
+			oneWayFlights = [flight_number, departure_date_time, airline_name]
+			document.getElementById("purchase_form_ticket_id").value =ticket_id;
+			document.getElementById("purchase_form_flight_number").value =flight_number;
+			document.getElementById("purchase_form_departure_date").value =departure_date_time;
+			document.getElementById("purchase_form_airline_name").value =airline_name;
+            document.getElementById("purchase_form_sold_price").valueAsNumber=price;
+            document.getElementById("purchase_form_travel_class").value=travel_class;
+			console.log(oneWayFlights)
+			return oneWayFlights
+		}
+		console.log(element)
+	}
+
+	function roundTripSelected(){
+		console.log("roundTripSelected")
+		var element = document.querySelectorAll('.selected');
+		console.log(element)
+		if(element[0]!== undefined){ //it must be selected
+            var ticket_id = element[0].children[0].firstChild.data
+            var price = element[0].children[2].firstChild.data
+			var flight_number = element[0].children[4].firstChild.data
+			var departure_date_time = element[0].children[5].firstChild.data
+			var airline_name = element[0].children[3].firstChild.data
+            var travel_class = element[0].children[1].firstChild.data
+			console.log(flight_number, departure_date_time, airline_name)
+			oneWayFlights = [flight_number, departure_date_time, airline_name]
+            
+			document.getElementById("purchase_form_ticket_id_return").value =ticket_id;
+			document.getElementById("purchase_form_flight_number_return").value =flight_number;
+			document.getElementById("purchase_form_departure_date_return").value =departure_date_time;
+			document.getElementById("purchase_form_airline_name_return").value =airline_name;
+            document.getElementById("purchase_form_sold_price_return").valueAsNumber=price;
+            document.getElementById("purchase_form_travel_class_return").value=travel_class;
+			console.log(oneWayFlights)
+			return oneWayFlights
+		}
+		console.log(element)
+	}
+
+	function queryForRoundTrip(){
+		console.log("queryForRoundTrip")
+		var element = document.querySelectorAll('.selected');
+		if(element[0]!== undefined){ //it must be selected
+			var departure_date_time = element[0].children[5].firstChild.data
+			var source = element[0].children[6].firstChild.data
+			var destination = element[0].children[4].firstChild.data
+			console.log(departure_date_time.substring(0,10))
+			console.log(departure_date_time, source, destination)
+			document.getElementById("return_form_source").value =source;
+			document.getElementById("return_form_destination").value =destination;
+			document.getElementById("return_form_departure_date").valueAsDate = new Date(departure_date_time.substring(0,10));
+		}
+		console.log(element)
+	}
+</script>
+</html>

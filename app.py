@@ -3,7 +3,7 @@ from email import charset
 from flask import Flask, render_template, request, session, url_for, redirect
 from flask_restx import reqparse
 from dotenv import load_dotenv
-from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser, create_tickets_parser
+from utils.objectParsers import customer_parser, airline_staff_parser, airport_parser, flight_parser, airplane_parser, purchase_parser, rate_comment_parser, create_tickets_parser, preview_purchase_parser
 import dbmanager
 import dbmanager_customer
 
@@ -42,17 +42,29 @@ def staffRegister():
 @app.route('/flight/search/', methods=['POST'])
 def searchFlights(): 
     # if it's round trip, just use this endpoint again with departure_date = arrival_date of the first trip
-    source = request.form["source"] # airport code
-    destination = request.form["destination"]
+    query_type = request.form["query_type"]
     departure = request.form["departure_date"]
-    flights = dbmanager.searchFlights(source, destination, departure)
-    
+    if query_type == "airport":
+        source = request.form["source"] # airport code
+        destination = request.form["destination"]
+        flights = dbmanager.searchFlightsAirport(source, destination, departure)
+    else:
+        source_city = request.form["source_city"]
+        source_country = request.form["source_country"]
+        destination_city = request.form["destination_city"]
+        destination_country = request.form["destination_country"]
+        flights = dbmanager.searchFlightsCityCountry(source_city, source_country, destination_city, destination_country, departure)
+            
     if flights:
         session.pop("error", None)
         session["flights"] = flights
     else:
         session.pop("flights", None)
-        session["error"] = f"No Flights Available F from {source} to {destination} at {departure}"
+        if query_type == "airport":
+            session["error"] = f"No Flights Available F from {source} to {destination} at {departure}"
+        else: 
+            session["error"] = f"No Flights Available F from {source_city}, {source_country} to {destination_city}, {destination_country} at {departure}"
+            
 
     username = session.get("username")
     airline = session.get("airline")
@@ -73,7 +85,7 @@ def searchReturnFlights():
     source = request.form["source"] # airport code
     destination = request.form["destination"]
     departure = request.form["departure_date"]
-    returnFlights = dbmanager.searchFlights(source, destination, departure)
+    returnFlights = dbmanager.searchFlightsAirport(source, destination, departure)
     username = session.get("username")
     airline = session.get("airline")
 
@@ -202,30 +214,75 @@ def viewMyUpcomingFlights():
 #     return dbmanager_customer.searchFlights_customer(source, destination, departure, return_date)
 
 # 3. PURCHASE TICKETS
+@app.route('/purchase_tickets_preview', methods=['POST'])
+def purchaseTicketsPreview():
+    purchase_preview = preview_purchase_parser.parse_args()
+    source_airline = purchase_preview["airline_name"]
+    source_flight = purchase_preview["flight_number"]
+    source_departure = purchase_preview["departure_date_time"]
+    source_travel = purchase_preview["travel_class"]
+    to_ticket = dbmanager_customer.getTicketPrice(source_airline, source_flight,
+                                                  source_departure, source_travel)
+    print(f"\n{to_ticket=}")
+    error = to_ticket.get("error", None)
+    if error:
+        return render_template("purchasePreview.html", error=error)
+    
+    session["sold_price"] = to_ticket["price"]
+
+    return_airline = purchase_preview.get("airline_name_return")
+    return_flight = purchase_preview.get("flight_number_return")
+    return_departure = purchase_preview.get("departure_date_time_return")
+    return_travel = purchase_preview.get("travel_class_return")
+    if return_airline and return_flight and return_departure and return_travel:
+        from_ticket = dbmanager_customer.getTicketPrice(return_airline, return_flight,
+                                                        return_departure, return_travel)
+        print(f"\n{from_ticket=}")
+        error = from_ticket.get("error", None)
+        if error:
+            return render_template("purchasePreview.html", error=error)
+        session["sold_price_return"] = from_ticket["price"]
+        
+    else:
+        from_ticket = None
+    
+    name = session.get("name")
+    username = session["username"]
+    
+    return render_template("purchasePreview.html", to_ticket=to_ticket, from_ticket=from_ticket, name=name, username=username)
+
 @app.route('/purchase_tickets', methods=['POST'])
 def purchaseTickets():
     session.pop("error", None)
     session.pop("purchaseStatus", None)
     purchase = purchase_parser.parse_args()
     purchase["customer_email"] = session.get("username")
-    success = dbmanager_customer.purchaseTicketsDict(purchase)
+    sold_price = session["sold_price"]
+    sold_price_return = session.get("sold_price_return")
+    success = dbmanager_customer.purchaseTicketsDict(purchase, sold_price, sold_price_return)
     purchased = []
     for tickets in success:
-        success = tickets.get("success")
-        if success:
-            purchased.append(success)
+        print(f"{tickets=}")
+        status = tickets.get("success")
+        if status:
+            purchased.append(status)
         else: 
             error = tickets.get("error", "Error handling ticket purchase. Please try again later")
             session.pop("purchaseStatus", None)
             session["error"] = error
+        print(f"{purchased=}")
+
     if purchased:
         session.pop("error", None)
-        session["purchaseStatus"] = f"Purchasing successful! Ticket ID is {purchased}"
-    return redirect(url_for("customerHome"))
+        purchaseStatus = f"Purchasing successful! Ticket ID is {purchased}"
+        session["purchaseStatus"] = purchaseStatus
+        return render_template("purchaseSuccess.html", purchaseStatus=purchaseStatus)
+        
+    return redirect(url_for("purchaseTicketsPreview"))
 
 @app.route('/manageFlights')
 def manageFlights():
-    myFlights = viewMyFlights()
+    myFlights = viewMyFlights() # all flights, not just upcoming
     cancelTrip = session.get("cancelTrip")
     rateTrip = session.get("rateTrip")
     error = session.get("error")
@@ -239,7 +296,8 @@ def cancelTrip():
     if request.method == 'POST':
         ticketID = request.form["ticketID"]
         cancelTrip = dbmanager_customer.cancelTrip(session["username"], ticketID)
-        session["cancelTrip"] = cancelTrip
+        session["cancelTrip"] = cancelTrip.get("success", None)
+        session["error"] = cancelTrip.get("error", None)
         return redirect(url_for("manageFlights"))
 
 # 5. GIVE RATINGS AND COMMENTS
@@ -541,17 +599,6 @@ def customerHome():
     mySpending = session.get("mySpending")
     print(f"{mySpending=}")
     return render_template('customerHome.html', username=username, name=name, flights=flights, returnFlights=returnFlights, flight_status=flight_status, purchaseStatus=purchaseStatus, error=error, myFlights=myFlights, mySpending=mySpending)
-		
-@app.route('/post', methods=['GET', 'POST'])
-def post():
-	username = session['username']
-	cursor = conn.cursor();
-	blog = request.form['blog']
-	query = 'INSERT INTO blog (blog_post, username) VALUES(%s, %s)'
-	cursor.execute(query, (blog, username))
-	conn.commit()
-	cursor.close()
-	return redirect(url_for('home'))
 
 @app.route('/logout')
 def logout():

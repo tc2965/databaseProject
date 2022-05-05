@@ -124,11 +124,25 @@ def registerStaff(staff):
 
 # 1. VIEW PUBLIC INFO A 
 # for round trips, just use this endpoint again and make departure = arrival of the first result
-def searchFlights(source, destination, departure_date):
+def searchFlightsAirport(source, destination, departure_date):
     query = "SELECT * FROM flight WHERE departure_airport_code = %s AND arrival_airport_code = %s AND departure_date_time > %s"
     params = (source, destination, departure_date)
     matchingFlights = executeQuery(query, params)
     return matchingFlights
+
+def searchFlightsCityCountry(source_city, source_country, destination_city, destination_country, departure_date):
+    departureQuery = "SELECT airport_code FROM airport WHERE city = %s AND country = %s"
+    params = (source_city, source_country)
+    departure_airport_code = executeQuery(departureQuery, params, True)
+    if not departure_airport_code:
+        return None
+    arrivalQuery = "SELECT airport_code FROM airport WHERE city = %s AND country = %s"
+    params = (destination_city, destination_country)
+    arrival_airport_code = executeQuery(arrivalQuery, params, True)
+    if not arrival_airport_code:
+        return None
+    
+    return searchFlightsAirport(departure_airport_code["airport_code"], arrival_airport_code["airport_code"], departure_date)
 
 # 1. VIEW PUBLIC INFO B
 def viewFlightStatus(airline, flight_number, departure, arrival=None):
