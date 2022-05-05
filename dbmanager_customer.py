@@ -417,7 +417,7 @@ def trackSpending(email, start_date=None, end_date=None):
         }
     else:
         cursor.close()
-        return False
+        return {}
 
 # 7. Logout
 
