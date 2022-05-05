@@ -1,15 +1,84 @@
-<p>This is the form for adding a flight<p>
+<html>
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+        td {padding: 5px}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 60%;
+			padding: 10px;
+		}
+        input.section{
+            float:right;
+        }
+        .section{
+            width:50%;
+            height: 25px;
+        }
+        .inputrow{
+            float:right;
+        }
+	</style>
+</head>
+<body class="center">
+<h4>This is the form for adding a flight <a href="/staffHome"><button>Go back home</button></a></h4>
 
 <form action="/flights" method="POST">
-    <input type="text" name = "flight_number" placeholder="flight_number" required/></br>
-    <input type="text" name = "airplane_id" placeholder="airplane_id" required/></br>
-    <input type="text" name = "departure_date_time" placeholder="departure_date_time" required/></br>
-    <input type="text" name = "departure_airport_code" placeholder="departure_airport_code" required/></br>
-    <input type="text" name = "arrival_date_time" placeholder="arrival_date_time" required/></br>
-    <input type="text" name = "arrival_airport_code" placeholder="arrival_airport_code" required/></br>
-    <input type="number" step="0.01" name = "base_price" placeholder="base_price" required/></br>
-    <input type="text" name = "status" placeholder="status" required/></br>
-    <input type="text" name = "airline_name" placeholder="airline_name" required/></br>
+    <div class="section">
+        <label>Flight</label>
+        <div class="inputrow">
+        <input type="text" name = "flight_number" placeholder="flight_number" required/>
+        <input type="text" name = "airplane_id" placeholder="airplane_id" required/>
+        </div>
+    </div>
+    <div class="section">
+        <label>Departure</label>
+        <div class="inputrow">
+        <input type="text" name = "departure_date_time" placeholder="YYYY-MM-DD HH:MM:SS" required/>
+        <input type="text" name = "departure_airport_code" placeholder="departure_airport_code" required/>
+        </div>
+    </div>
+    <div class="section">
+        <label>Arrival</label>
+        <div class="inputrow">
+        <input type="text" name = "arrival_date_time" placeholder="YYYY-MM-DD HH:MM:SS" required/>
+        <input type="text" name = "arrival_airport_code" placeholder="arrival_airport_code" required/>
+        </label>
+        </div>
+    </div>
+    <div class="section">
+        <label>Price and Status</label>
+        <div class="inputrow">
+        <input type="number" step="0.01" name = "base_price" placeholder="base_price" required/>
+        <input type="text" name = "status" placeholder="status" required/>
+        </div>
+    </div>
+    <div class="section">
+        <label>Airline</label>
+        <div class="inputrow">
+        <input type="text" name = "airline_name" placeholder="airline_name" required/>
+        </div>
+    </div>
     <input type="submit" value = Submit />
     {% if error %}
         <p class="error"><strong>Error:</strong> {{error}}</p>
@@ -19,7 +88,7 @@
 <p>{{createdFlight}}</p>
 {% endif %}
 
-<p>Create tickets for purchasing</p>
+<h4>Create tickets for purchasing</h4>
 <form action="/create_tickets" method="POST">
     <input type="text" name = "economy_seats" placeholder="economy_seats" required/></br>
     <input type="text" name = "business_seats" placeholder="business_seats" required/></br>
@@ -35,3 +104,5 @@
 {% if createdTickets %}
 <p>{{createdTickets}}</p>
 {% endif %}
+</body>
+</html>

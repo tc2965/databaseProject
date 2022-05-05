@@ -358,7 +358,9 @@ def view_flights_time_default():
     if not session.get("username"):
         return None # todo render page with error
     if request.method == 'GET': 
-        return dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])
+        flights = dbmanager.findFutureAirlineFlightsTime(None, None, session["username"])["data"]
+        session["flights"] = flights
+        return redirect(url_for('staffHome'))
 
 # 1. VIEW FUTURE FLIGHTS BY AIRPORTS
 @app.route('/view_flights/airport', methods=['POST'])
@@ -371,6 +373,23 @@ def view_flights_airports():
         flights = dbmanager.findFutureAirlineFlightsAirport(type, airport, session["username"])["data"]
         print(flights)
         session["flights"] = flights
+        return redirect(url_for('staffHome'))
+
+# 1. VIEW FUTURE FLIGHTS BY AIRPORT OR CITY AND TIME
+@app.route('/view_flights/airport_city/time', methods=['POST'])
+def view_flights_airports_city_time():
+    if not session.get("username"):
+        return None # todo render page with error
+    if request.method == 'POST':
+        source = request.form["source"]
+        destination = request.form["destination"]
+        departure_date = request.form["departure_date"]
+        return_date = request.form.get("return_date")
+        if len(return_date) == 0:
+            return_date = None
+        flights = dbmanager.searchFlights(source, destination, departure_date, return_date)
+        session["flights"] = flights.get("data")
+        session["error"] = flights.get("error", None)
         return redirect(url_for('staffHome'))
     
 # 1. SEE ALL CUSTOMERS OF PARTICULAR FLIGHT
@@ -439,7 +458,9 @@ def airplane():
     if request.method == 'POST':
         airplane = airplane_parser.parse_args() 
         message = dbmanager.addAirplane(airplane, session["username"])
-        return createAirplane(message=message)
+        if message.get("error"):
+            return createAirplane(error=message["error"])
+        return createAirplane(message=message["success"])
 
 # 5. ADD AIRPORT 
 @app.route('/createAirport')
@@ -453,7 +474,9 @@ def airport():
     if request.method == 'POST':
         airport = airport_parser.parse_args() 
         message = dbmanager.addAirport(airport)
-        return createAirport(message=message)
+        if message.get("error"):
+            return createAirport(error=message["error"])
+        return createAirport(message=message["success"])
 
 # 6. VIEW FLIGHT RATINGS 
 # /view_flight_ratings/ER400
@@ -465,6 +488,7 @@ def viewFlightRatings():
         flight_number = request.form["flight_number"]
         ratings = dbmanager.viewFlightRatings(flight_number, session["username"])
         session["ratings"] = ratings 
+        session["error"] = ratings.get("error", None)
         print(ratings)
         return redirect(url_for('staffHome'))
      
@@ -568,10 +592,11 @@ def viewTopDestinations(period):
 @app.route('/home')
 def home():
     username = session.get('username')
+    airline = session.get('airline')
     flights = session.get("flights")
     returnFlights = session.get("returnFlights")
     flight_status = session.get("status")
-    return render_template('home.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status)
+    return render_template('home.html', username=username, flights=flights, returnFlights=returnFlights, flight_status=flight_status, airline=airline)
 
 @app.route('/staffHome')
 def staffHome():
@@ -584,7 +609,8 @@ def staffHome():
     mostFrequentFlyer = session.get("mostFrequentFlyer")
     customer_flights = session.get("customer_flights")
     returnFlights = session.get("returnFlights")
-    return render_template('staffHome.html', username=username, name=name, flights=flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights, returnFlights=returnFlights)
+    error = session.get("error")
+    return render_template('staffHome.html', username=username, name=name, flights=flights, airline=airline, flight_status=status, ratings=ratings, mostFrequentFlyer=mostFrequentFlyer, customer_flights=customer_flights, returnFlights=returnFlights, error=error)
 
 @app.route('/customerHome')
 def customerHome():

@@ -33,7 +33,12 @@
 <body class="center">
 <h1>{{airline}} | Welcome {{name}}</h1>
 <p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
+{% if error %}
+<p class="error"><strong>Error! </strong> {{error}}</p>
+{% endif %}
 <a href="/view_most_frequent_customer"><button>Refresh Most Frequent Flyer</button></a>
+<a href="/view_flights/time/default"><button>View {{airline}} flights for the next 30 days</button></a>
+
 {% if mostFrequentFlyer %}
 <p>Current Most Frequent Flyer is {{mostFrequentFlyer.customer_email}} with {{mostFrequentFlyer.trips}} trips</p>
 {% endif %}
@@ -128,6 +133,19 @@
 	<input type="submit" value = Submit />
 </form>
 
+<h4>Search for {{airline}} flights by airports or city and exact time</h4> 
+<form action="/view_flights/airport_city/time" method="POST">
+	<label>Source City or Airport</label>
+	<input type="text" name = "source" placeholder="JFK" required/>
+	<label>Source City or Airport</label>
+	<input type="text" name = "destination" placeholder="PVG" required/>
+	<label>Departure</label>
+	<input type="text" name = "departure_date" placeholder="YYYY-MM-DD" required/>
+	<label>Arrival</label>
+	<input type="text" name = "return_date" placeholder="YYYY-MM-DD"/>
+	<input type="submit" value = Submit />
+</form>
+
 {% if flights%}
 <p>View {{airline}} Flights</p>
 <table>
@@ -164,6 +182,7 @@
 <a href="/createAirport"><button>Create Airport</button></a>
 <a href="/createFlight"><button>Create Flight</button></a>
 <a href="/viewReports"><button>View Reports</button></a>
+<a href="/home"><button>View Public Flight Search</button></a>
 </body>
 </html>
 

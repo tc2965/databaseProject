@@ -1,4 +1,37 @@
-<p>This is the form for adding an airplane<p>
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com"> 
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+	<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css" />
+	<style type="text/css">
+		h1, h2, h3, h4{
+			font-family: 'Playfair Display', serif;
+		}
+		table, th, td{
+			border: 1px solid black;
+		}
+        td {padding: 5px}
+		table {width:100%}
+		.pick_flight {border: 1px #DDD solid; padding: 5px; cursor: pointer;}
+		tr.pick_flight:hover { background-color : #FDF0D5; }
+		.selected {
+			background-color: #89ae37;
+			color: #FFF;
+		}
+		.error {
+			font-weight: 700;
+			color: red;
+		}
+		.center {
+			margin: auto;
+			width: 60%;
+			padding: 10px;
+		}
+	</style>
+</head>
+<body class="center">
+<h4>This is the form for adding an Airplane <a href="/staffHome"><button>Go back home</button></a></h4>
 
 <form action="/airplane" method="POST">
     <input type="text" name = "ID" placeholder="ID" required/></br>
@@ -14,3 +47,5 @@
     <p class="message">{{message}}</p>
 {% endif %}
 </form>
+</body>
+</html>

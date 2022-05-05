@@ -186,6 +186,55 @@ def findFutureAirlineFlightsAirport(way_type, airport, username):
     flights = executeQuery(query, params)
     return {"data" : flights}
 
+def searchFlights(source, destination, departure_date, return_date=None):
+    print(source, destination, departure_date, type(return_date))
+    conn = createConnection()
+    cursor = conn.cursor()
+
+    # convert code/city to code
+    cursor.execute("SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s", (source, source))
+    departure_airport_code = cursor.fetchone()
+    cursor.execute("SELECT airport_code FROM airport WHERE airport_code = %s OR city = %s", (destination, destination))
+    arrival_airport_code = cursor.fetchone()
+
+    if not departure_airport_code and not arrival_airport_code:
+        return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
+
+    departure_airport_code = departure_airport_code["airport_code"]
+    arrival_airport_code = arrival_airport_code["airport_code"]
+    if return_date == None:
+        try:
+            start = (datetime.strptime(departure_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end = (datetime.strptime(departure_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        except:
+            start = departure_date
+            end = datetime.strptime(departure_date,"%Y-%m-%d") + relativedelta(days=1)
+        print(start, end)
+        cursor.execute("""SELECT * FROM flight
+        WHERE departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s)""", (departure_airport_code, arrival_airport_code, start, end))
+    else:
+        try:
+            start1 = (datetime.strptime(departure_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end1 = (datetime.strptime(departure_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+            start2 = (datetime.strptime(return_date,"%m/%d/%Y")).strftime("%Y-%m-%d")
+            end2 = (datetime.strptime(return_date,"%m/%d/%Y") + relativedelta(days=1)).strftime("%Y-%m-%d")
+        except:
+            start1 = departure_date
+            start2 = return_date
+            end1 = datetime.strptime(departure_date,"%Y-%m-%d") + relativedelta(days=1)
+            end2 = datetime.strptime(return_date,"%Y-%m-%d") + relativedelta(days=1)
+
+        print(start1, end1, start2, end2)
+        cursor.execute("""SELECT * FROM flight
+        WHERE (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s))
+        OR (departure_airport_code = %s AND arrival_airport_code = %s AND (departure_date_time > %s AND departure_date_time < %s))""",
+        (departure_airport_code, arrival_airport_code, start1, end1, arrival_airport_code, departure_airport_code, start2, end2))
+    matchingFlights = cursor.fetchall()
+    cursor.close()
+    if not matchingFlights:
+        return {"error": f"No matching flights for departure from {source} at {departure_date} to {destination}"}
+    return {"data": matchingFlights}
+
 # 2. CREATE NEW FLIGHTS 
 def createFlight(flight, username): 
     staff = assertStaffPermission(username, flight["airline_name"])
@@ -257,8 +306,8 @@ def addAirplane(airplane, username):
     success = executeCommitQuery(insertAirplane, params)
     id = airplane["ID"]
     if success == 0:
-        return f"Adding airplane #{id} unsuccessful"
-    return f"Adding airplane {id} successful"
+        return {"error": f"Adding airplane #{id} unsuccessful"}
+    return {"success": f"Adding airplane {id} successful"}
 
 # 5. ADD AIRPORT
 def addAirport(airport):
@@ -267,8 +316,8 @@ def addAirport(airport):
     success = executeCommitQuery(insertAirport, params)
     code = airport["airport_code"]
     if success == 0:
-        return f"Adding airport #{code} unsuccessful"
-    return f"Adding airport {code} successful"
+        return {"error": f"Adding airport #{code} unsuccessful"}
+    return {"error": f"Adding airport {code} successful"}
 
 # 6. VIEW FLIGHT RATINGS 
 def viewFlightRatings(flight_number, username):
@@ -281,6 +330,8 @@ def viewFlightRatings(flight_number, username):
     query = "SELECT * FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s"
     params = flight_number
     ratings = executeQuery(query, params)
+    if not ratings:
+        return {"error": f"No ratings for this flight {flight_number}"}
     
     averageQuery = "SELECT flight_number, AVG(rating) as avg FROM ratings LEFT JOIN ticket ON ratings.ticket_id = ticket.ID WHERE flight_number = %s GROUP BY flight_number"
     average = executeQuery(averageQuery, params, True)
