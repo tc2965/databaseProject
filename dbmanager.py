@@ -14,7 +14,6 @@ db = os.environ.get("DB")
 port = int(os.environ.get("PORT"))
 print(host, user, password, db)
 
-
 def createConnection():
     return pymysql.connect(host=host,
                        port=port,

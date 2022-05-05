@@ -129,8 +129,8 @@
 
 <h4>Search for {{airline}} flights within a period</h4> 
 <form action="/view_flights/time" method="POST">
-	<input type="text" name = "start" placeholder="YYYY-MM-DD" required/>
-	<input type="text" name = "end" placeholder="YYYY-MM-DD" required/>
+	<input type="date" name="start" required>
+	<input type="date" name="end" required>
 	<input type="submit" value = Submit />
 </form>
 
@@ -148,7 +148,7 @@
 <form action="/view_flights/airport_city/after_time" method="POST">
 	<input type="text" name = "source" placeholder="source" required/>
 	<input type="text" name = "destination" placeholder="destination" required/>
-	<input type="text" name = "departure_date" placeholder="departure_date" required/>
+	<input type="date" name="departure_date" required>
 	<input type="submit" value = Submit />
 </form>
 
@@ -159,9 +159,9 @@
 	<label>Source City or Airport</label>
 	<input type="text" name = "destination" placeholder="PVG" required/>
 	<label>Departure</label>
-	<input type="text" name = "departure_date" placeholder="YYYY-MM-DD" required/>
+	<input type="date" name="departure_date" required>
 	<label>Arrival</label>
-	<input type="text" name = "return_date" placeholder="YYYY-MM-DD"/>
+	<input type="date" name="return_date">
 	<input type="submit" value = Submit />
 </form>
 
