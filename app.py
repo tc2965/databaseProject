@@ -390,8 +390,10 @@ def view_flights_airports():
         flights = dbmanager.findFlightsByAirport(type, airport, session["username"])
         print(flights)
         if flights.get("error"):
+            session.pop("flights", None)
             session["error"] = flights["error"]
         else:
+            session.pop("error", None)
             session["flights"] = flights["data"]
         return redirect(url_for('staffHome'))
     
@@ -404,8 +406,13 @@ def searchFlightAfter():
         destination = request.form["destination"]
         departure_date = request.form["departure_date"]
         flights = dbmanager.findFlightsAfterTime(source, destination, departure_date, session["username"])
-        session["flights"] = flights.get("data")
-        session["error"] = flights.get("error", None)
+        
+        if flights.get("error"):
+            session.pop("flights", None)
+            session["error"] = flights["error"]
+        else:
+            session.pop("error", None)
+            session["flights"] = flights["data"]
         return redirect(url_for('staffHome'))
     
 # 1. VIEW FUTURE FLIGHTS BY AIRPORT OR CITY AND TIME
@@ -497,7 +504,10 @@ def flightStatus():
 # 4. ADD AIRPLANE 
 @app.route('/createAirplane')
 def createAirplane(message=None, error=None): 
-    return render_template('createAirplane.html', message=message, error=error)
+    if error:
+        return render_template('createAirplane.html', message=None, error=error)
+    else:
+        return render_template('createAirplane.html', message=message, error=None)
 
 @app.route('/airplane', methods=['POST'])
 def airplane(): 
@@ -506,9 +516,11 @@ def airplane():
     if request.method == 'POST':
         airplane = airplane_parser.parse_args() 
         message = dbmanager.addAirplane(airplane, session["username"])
+        print(f"{message=}")
         if message.get("error"):
-            return createAirplane(error=message["error"])
-        return createAirplane(message=message["success"])
+            return createAirplane(message=None, error=message["error"])
+        else:
+            return createAirplane(message=message["success"], error=None)
 
 # 5. ADD AIRPORT 
 @app.route('/createAirport')
@@ -522,9 +534,12 @@ def airport():
     if request.method == 'POST':
         airport = airport_parser.parse_args() 
         message = dbmanager.addAirport(airport)
+        
         if message.get("error"):
-            return createAirport(error=message["error"])
-        return createAirport(message=message["success"])
+            print(f"{message=}")
+            return createAirport(message=None, error=message["error"])
+        else:
+            return createAirport(message=message["success"], error=None)
 
 # 6. VIEW FLIGHT RATINGS 
 # /view_flight_ratings/ER400

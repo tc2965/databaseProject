@@ -41,12 +41,12 @@
     <input type="text" name = "country" placeholder="country" required/></br>
     <input type="text" name = "type" placeholder="type" required/></br>
     <input type="submit" value = Submit />
-    {% if error %}
-        <p class="error"><strong>Error:</strong> {{error}}</p>
-    {% endif %}
-    {% if message %}
-    <p class="message">{{message}}</p>
-{% endif %}
 </form>
+{% if error %}
+<p class="error"><strong>Error:</strong> {{error}}</p>
+{% endif %}
+{% if message %}
+<p>{{message}}</p>
+{% endif %}
 </body>
 </html>

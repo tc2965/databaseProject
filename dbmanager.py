@@ -437,7 +437,7 @@ def addAirport(airport):
     code = airport["airport_code"]
     if success == 0:
         return {"error": f"Adding airport #{code} unsuccessful"}
-    return {"error": f"Adding airport {code} successful"}
+    return {"success": f"Adding airport {code} successful"}
 
 # 6. VIEW FLIGHT RATINGS 
 def viewFlightRatings(flight_number, username):
