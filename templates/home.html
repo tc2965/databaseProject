@@ -34,7 +34,11 @@
 {% if airline %}
 <a href="/staffHome"><button>Go Back to Staff Home</button></a>
 {% else %}
+{% if name %}
+<h1>Welcome {{name}}</h1>
+{% else %}
 <h1>Welcome</h1>
+{% endif %}
 <a href="/login"><button>Login</button></a>
 <a href="/register"><button>Register</button></a>
 {% endif %}

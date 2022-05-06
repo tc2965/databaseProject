@@ -31,7 +31,11 @@
 	</style>
 </head>
 <body class="center">
-    <h1>Welcome {{name}}</h1>
+	{% if name %}
+	<h1>Welcome {{name}}</h1>
+	{% else %}
+	<h1>Welcome</h1>
+	{% endif %}
     <p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
     <a href="/customerHome"><button>Go back home</button></a>
     <h2>{{purchaseStatus}}</h2>

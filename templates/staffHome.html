@@ -31,7 +31,11 @@
 	</style>
 </head>
 <body class="center">
+{% if name %}
 <h1>{{airline}} | Welcome {{name}}</h1>
+{% else %}
+<h1>{{airline}} | Welcome</h1>
+{% endif %}
 <p style="font-family: 'Playfair Display', serif;">{{username}} <a href="/logout"><button>Logout</button></a></p>
 {% if error %}
 <p class="error"><strong>Error! </strong> {{error}}</p>
